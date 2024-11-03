@@ -47,6 +47,7 @@ export class UserService {
             '15s',
         );
         const refreshToken = uuidv4();
+        await this.userModel.updateOne({ email }, { refreshToken });
 
         return {
             user: UserFilter.makeBasicFilter(foundUser),
@@ -62,5 +63,34 @@ export class UserService {
         }
 
         return UserFilter.makeDetailFilter(user);
+    }
+
+    async invokeNewTokens(refreshToken: string, userId: string): Promise<object> {
+        const user = await this.userModel.findById(new Types.ObjectId(userId));
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+
+        if (user.refreshToken !== refreshToken) {
+            throw new BadRequestException('Access denied!');
+        }
+
+        const newAccessToken = JWTHelper.generateToken(
+            {
+                email: user.email,
+                username: user.username,
+                id: user._id.toString(),
+            },
+            '15s',
+        );
+        const newRefreshToken = uuidv4();
+
+        await this.userModel.updateOne({ _id: user._id }, { refreshToken: newRefreshToken });
+
+        return {
+            user: UserFilter.makeBasicFilter(user),
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+        };
     }
 }

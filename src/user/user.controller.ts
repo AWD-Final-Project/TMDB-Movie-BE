@@ -64,4 +64,21 @@ export class UserController {
             data: data,
         };
     }
+
+    @Get('invoke-new-tokens')
+    async invokeNewTokens(@Req() req: Request) {
+        const refreshToken = req.body['refreshToken'];
+        const userId = req['user']?.id;
+        if (!refreshToken) {
+            throw new BadRequestException('Authorization credential is missing');
+        }
+
+        const data = await this.userService.invokeNewTokens(refreshToken, userId);
+
+        return {
+            statusCode: 200,
+            message: 'Invoke new tokens successfully',
+            data: data,
+        };
+    }
 }

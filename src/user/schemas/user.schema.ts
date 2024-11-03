@@ -19,6 +19,9 @@ export class User extends Document {
 
     @Prop({ default: '' })
     address: string;
+
+    @Prop({ default: '' })
+    refreshToken: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
