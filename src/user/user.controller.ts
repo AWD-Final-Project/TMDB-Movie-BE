@@ -1,4 +1,4 @@
-import { Controller, Post, Body, BadRequestException, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Post, Body, BadRequestException, UsePipes, ValidationPipe, Get, Req } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -51,5 +51,17 @@ export class UserController {
         } catch (error) {
             throw new BadRequestException('Login error: ' + error.message);
         }
+    }
+
+    @Get('profile')
+    async getProfile(@Req() req: Request) {
+        const user = req['user'];
+        const data = await this.userService.getProfile(user?.id);
+
+        return {
+            statusCode: 200,
+            message: 'Get profile successfully',
+            data: data,
+        };
     }
 }

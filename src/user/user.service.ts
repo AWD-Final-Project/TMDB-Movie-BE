@@ -6,12 +6,13 @@ import { User } from './schemas/user.schema';
 import BcryptHelper from 'src/helpers/bcrypt.helper';
 import JWTHelper from 'src/helpers/jwt.helper';
 import UserFilter from './user.filter';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class UserService {
-    constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+    constructor(@InjectModel(User.name) private readonly userModel: Model<User>) {}
 
-    async register(email: string, username: string, password: string): Promise<User> {
+    async register(email: string, username: string, password: string): Promise<object> {
         const existingUser = await this.userModel.findOne({
             $or: [{ email }, { username }],
         });
@@ -22,7 +23,8 @@ export class UserService {
         const hashedPassword = await BcryptHelper.hash(password);
 
         const user = new this.userModel({ email, username, password: hashedPassword });
-        return user.save();
+        const returnedUser = await user.save();
+        return UserFilter.makeBasicFilter(returnedUser);
     }
 
     async login(email: string, password: string): Promise<object> {
@@ -36,7 +38,14 @@ export class UserService {
             throw new BadRequestException('Credentials are incorrect!');
         }
 
-        const accessToken = JWTHelper.generateToken({ email: foundUser.email, username: foundUser.username }, '15m');
+        const accessToken = JWTHelper.generateToken(
+            {
+                email: foundUser.email,
+                username: foundUser.username,
+                id: foundUser._id.toString(),
+            },
+            '15s',
+        );
         const refreshToken = uuidv4();
 
         return {
@@ -44,5 +53,14 @@ export class UserService {
             accessToken,
             refreshToken,
         };
+    }
+
+    async getProfile(userId: string): Promise<object> {
+        const user = (await this.userModel.findById(new Types.ObjectId(userId)).lean()) as Partial<User>;
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+
+        return UserFilter.makeDetailFilter(user);
     }
 }

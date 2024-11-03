@@ -6,15 +6,16 @@ class UserFilter {
             id: user?._id,
             email: user?.email,
             username: user?.username,
-            fullname: user?.fullname,
         };
     }
 
-    static makeDetailFilter(user: User): object {
+    static makeDetailFilter(user: Partial<User>): object {
         return {
-            ...user,
-            password: undefined,
-            __v: undefined,
+            id: user?._id,
+            email: user?.email,
+            username: user?.username,
+            fullname: user?.fullname,
+            address: user?.address,
         };
     }
 }
