@@ -13,29 +13,12 @@ export class User extends Document {
 
     @Prop({ required: true })
     password: string;
+
+    @Prop({ default: '' })
+    fullname: string;
+
+    @Prop({ default: '' })
+    address: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-
-// // user.schema.ts
-// import { Schema, Document } from 'mongoose';
-
-// export const UserSchema = new Schema(
-//     {
-//         name: String,
-//         email: String,
-//         password: String,
-//     },
-//     {
-//         timestamps: true,
-//         collection: 'Users',
-//     },
-// );
-
-// export interface User extends Document {
-//     name: string;
-//     email: string;
-//     password: string;
-//     createdAt: Date;
-//     updatedAt: Date;
-// }
