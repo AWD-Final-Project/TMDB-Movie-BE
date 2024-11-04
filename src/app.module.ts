@@ -15,6 +15,5 @@ import { AuthMiddleware } from './middlewares/auth.middleware';
 export class AppModule {
     configure(consumer: MiddlewareConsumer) {
         consumer.apply(AuthMiddleware).forRoutes({ path: 'user/profile', method: RequestMethod.GET });
-        consumer.apply(AuthMiddleware).forRoutes({ path: 'user/invoke-new-tokens', method: RequestMethod.GET });
     }
 }

@@ -12,6 +12,10 @@ class JWTHelper {
     static verifyToken(token: string): object {
         return jwt.verify(token, secret);
     }
+
+    static checkIfTokenExpiredError(error: any): boolean {
+        return error instanceof jwt.TokenExpiredError;
+    }
 }
 
 export default JWTHelper;

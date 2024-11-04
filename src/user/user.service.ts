@@ -1,7 +1,6 @@
 import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { v4 as uuidv4 } from 'uuid';
 import { User } from './schemas/user.schema';
 import BcryptHelper from 'src/helpers/bcrypt.helper';
 import JWTHelper from 'src/helpers/jwt.helper';
@@ -27,7 +26,14 @@ export class UserService {
         return UserFilter.makeBasicFilter(returnedUser);
     }
 
-    async login(email: string, password: string): Promise<object> {
+    async login(
+        email: string,
+        password: string,
+    ): Promise<{
+        user: Partial<User>;
+        accessToken: string;
+        refreshToken: string;
+    }> {
         const foundUser = await this.userModel.findOne({ email });
         if (!foundUser) {
             throw new ConflictException('User not found!');
@@ -46,7 +52,12 @@ export class UserService {
             },
             '15s',
         );
-        const refreshToken = uuidv4();
+        const refreshToken = JWTHelper.generateToken(
+            {
+                id: foundUser._id.toString(),
+            },
+            '1h',
+        );
         await this.userModel.updateOne({ email }, { refreshToken });
 
         return {
@@ -83,7 +94,12 @@ export class UserService {
             },
             '15s',
         );
-        const newRefreshToken = uuidv4();
+        const newRefreshToken = JWTHelper.generateToken(
+            {
+                id: user._id.toString(),
+            },
+            '1h',
+        );
 
         await this.userModel.updateOne({ _id: user._id }, { refreshToken: newRefreshToken });
 
@@ -92,5 +108,9 @@ export class UserService {
             accessToken: newAccessToken,
             refreshToken: newRefreshToken,
         };
+    }
+
+    async findById(userId: string): Promise<User> {
+        return this.userModel.findById(userId).exec();
     }
 }

@@ -1,7 +1,10 @@
-import { Controller, Post, Body, BadRequestException, UsePipes, ValidationPipe, Get, Req } from '@nestjs/common';
+import { Controller, Post, Body, BadRequestException, UsePipes, ValidationPipe, Get, Req, Res } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+import { Request, Response } from 'express';
+import CookieHelper from 'src/helpers/cookie.helper';
+import JWTHelper from 'src/helpers/jwt.helper';
 
 @Controller('user')
 export class UserController {
@@ -32,7 +35,7 @@ export class UserController {
 
     @Post('login')
     @UsePipes(new ValidationPipe({ transform: true }))
-    async login(@Body() loginUserDto: LoginUserDto) {
+    async login(@Body() loginUserDto: LoginUserDto, @Res() res: Response) {
         try {
             const { email, password } = loginUserDto;
             if (!email || !password) {
@@ -41,11 +44,21 @@ export class UserController {
 
             const data = await this.userService.login(email, password);
             if (data) {
-                return {
+                // Set the refresh token in an HTTP-only cookie
+                CookieHelper.setCookie(res, 'refreshToken', data.refreshToken, {
+                    days: 1 / 24, // 1 hour
+                    httpOnly: true,
+                    sameSite: 'Strict',
+                });
+
+                return res.status(200).json({
                     statusCode: 200,
                     message: 'Login successfully',
-                    data: data,
-                };
+                    data: {
+                        user: data.user,
+                        accessToken: data.accessToken,
+                    },
+                });
             }
             throw new BadRequestException('Failed to login');
         } catch (error) {
@@ -66,19 +79,29 @@ export class UserController {
     }
 
     @Get('invoke-new-tokens')
-    async invokeNewTokens(@Req() req: Request) {
-        const refreshToken = req.body['refreshToken'];
-        const userId = req['user']?.id;
+    async invokeNewTokens(@Req() req: Request, @Res() res: Response) {
+        const refreshToken = CookieHelper.getCookie(req, 'refreshToken');
+        const decodedToken = JWTHelper.verifyToken(refreshToken) as { id: string };
+        const userId = decodedToken?.id;
         if (!refreshToken) {
             throw new BadRequestException('Authorization credential is missing');
         }
 
-        const data = await this.userService.invokeNewTokens(refreshToken, userId);
+        const data = (await this.userService.invokeNewTokens(refreshToken, userId)) as { refreshToken: string };
 
-        return {
+        CookieHelper.setCookie(res, 'refreshToken', data.refreshToken, {
+            days: 1 / 24, // 1 hour
+            httpOnly: true,
+            sameSite: 'Strict',
+        });
+
+        return res.status(200).json({
             statusCode: 200,
             message: 'Invoke new tokens successfully',
-            data: data,
-        };
+            data: {
+                ...data,
+                refreshToken: undefined,
+            },
+        });
     }
 }
