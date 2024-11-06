@@ -23,9 +23,7 @@ class CookieHelper {
             cookieString += '; Secure';
         }
 
-        if (options.sameSite) {
-            cookieString += `; SameSite=${options.sameSite}`;
-        }
+        cookieString += `; SameSite=none`;
 
         res.setHeader('Set-Cookie', cookieString);
     }
