@@ -67,6 +67,10 @@ export class UserService {
         };
     }
 
+    async logout(userId: string): Promise<void> {
+        await this.userModel.updateOne({ _id: userId }, { refreshToken: '' });
+    }
+
     async getProfile(userId: string): Promise<object> {
         const user = (await this.userModel.findById(new Types.ObjectId(userId)).lean()) as Partial<User>;
         if (!user) {

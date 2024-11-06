@@ -1,4 +1,15 @@
-import { Controller, Post, Body, BadRequestException, UsePipes, ValidationPipe, Get, Req, Res } from '@nestjs/common';
+import {
+    Controller,
+    Post,
+    Body,
+    BadRequestException,
+    UsePipes,
+    ValidationPipe,
+    Get,
+    Req,
+    Res,
+    UnauthorizedException,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -66,6 +77,18 @@ export class UserController {
         }
     }
 
+    @Get('logout')
+    async logout(@Req() req: Request, @Res() res: Response) {
+        // Clear the refresh token in the HTTP-only cookie
+        CookieHelper.eraseCookie(res, 'refreshToken');
+
+        await this.userService.logout(req['user']?.id);
+        return res.status(200).json({
+            statusCode: 200,
+            message: 'Logout successfully',
+        });
+    }
+
     @Get('profile')
     async getProfile(@Req() req: Request) {
         const user = req['user'];
@@ -81,12 +104,21 @@ export class UserController {
     @Get('invoke-new-tokens')
     async invokeNewTokens(@Req() req: Request, @Res() res: Response) {
         const refreshToken = CookieHelper.getCookie(req, 'refreshToken');
-        const decodedToken = JWTHelper.verifyToken(refreshToken) as { id: string };
-        const userId = decodedToken?.id;
         if (!refreshToken) {
             throw new BadRequestException('Authorization credential is missing');
         }
 
+        let decodedToken = null;
+        try {
+            decodedToken = JWTHelper.verifyToken(refreshToken) as { id: string };
+        } catch (error) {
+            throw new UnauthorizedException('Invalid or expired refresh token: ' + error.message);
+        }
+
+        const userId = decodedToken?.id;
+        if (!userId) {
+            throw new UnauthorizedException('Unauthorized user');
+        }
         const data = (await this.userService.invokeNewTokens(refreshToken, userId)) as { refreshToken: string };
 
         CookieHelper.setCookie(res, 'refreshToken', data.refreshToken, {
