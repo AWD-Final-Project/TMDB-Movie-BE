@@ -20,6 +20,12 @@ export class User extends Document {
     @Prop({ default: '' })
     address: string;
 
+    @Prop({ default: 'user' })
+    role: string;
+
+    @Prop({ default: 'active' })
+    status: string;
+
     @Prop({ default: '' })
     refreshToken: string;
 }

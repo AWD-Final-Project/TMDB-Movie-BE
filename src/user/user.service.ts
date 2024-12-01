@@ -21,8 +21,8 @@ export class UserService {
 
         const hashedPassword = await BcryptHelper.hash(password);
 
-        const user = new this.userModel({ email, username, password: hashedPassword });
-        const returnedUser = await user.save();
+        const newUser = new this.userModel({ email, username, password: hashedPassword });
+        const returnedUser = await newUser.save();
         return UserFilter.makeBasicFilter(returnedUser);
     }
 
@@ -44,20 +44,8 @@ export class UserService {
             throw new BadRequestException('Credentials are incorrect!');
         }
 
-        const accessToken = JWTHelper.generateToken(
-            {
-                email: foundUser.email,
-                username: foundUser.username,
-                id: foundUser._id.toString(),
-            },
-            '15s',
-        );
-        const refreshToken = JWTHelper.generateToken(
-            {
-                id: foundUser._id.toString(),
-            },
-            '1h',
-        );
+        const accessToken = JWTHelper.generateAccessToken(foundUser);
+        const refreshToken = JWTHelper.generateRefreshToken(foundUser);
         await this.userModel.updateOne({ email }, { refreshToken });
 
         return {
@@ -68,53 +56,41 @@ export class UserService {
     }
 
     async logout(userId: string): Promise<void> {
-        await this.userModel.updateOne({ _id: userId }, { refreshToken: '' });
+        await this.userModel.updateOne({ _id: new Types.ObjectId(userId) }, { refreshToken: '' });
     }
 
     async getProfile(userId: string): Promise<object> {
-        const user = (await this.userModel.findById(new Types.ObjectId(userId)).lean()) as Partial<User>;
-        if (!user) {
+        const foundUser = (await this.userModel.findById(new Types.ObjectId(userId)).lean()) as Partial<User>;
+        if (!foundUser) {
             throw new BadRequestException('User not found');
         }
 
-        return UserFilter.makeDetailFilter(user);
+        return UserFilter.makeDetailFilter(foundUser);
     }
 
     async invokeNewTokens(refreshToken: string, userId: string): Promise<object> {
-        const user = await this.userModel.findById(new Types.ObjectId(userId));
-        if (!user) {
+        const foundUser = await this.userModel.findById(new Types.ObjectId(userId));
+        if (!foundUser) {
             throw new BadRequestException('User not found');
         }
 
-        if (user.refreshToken !== refreshToken) {
+        if (foundUser.refreshToken !== refreshToken) {
             throw new BadRequestException('Access denied!');
         }
 
-        const newAccessToken = JWTHelper.generateToken(
-            {
-                email: user.email,
-                username: user.username,
-                id: user._id.toString(),
-            },
-            '15s',
-        );
-        const newRefreshToken = JWTHelper.generateToken(
-            {
-                id: user._id.toString(),
-            },
-            '1h',
-        );
+        const newAccessToken = JWTHelper.generateAccessToken(foundUser);
+        const newRefreshToken = JWTHelper.generateRefreshToken(foundUser);
 
-        await this.userModel.updateOne({ _id: user._id }, { refreshToken: newRefreshToken });
+        await this.userModel.updateOne({ _id: foundUser._id }, { refreshToken: newRefreshToken });
 
         return {
-            user: UserFilter.makeBasicFilter(user),
+            user: UserFilter.makeBasicFilter(foundUser),
             accessToken: newAccessToken,
             refreshToken: newRefreshToken,
         };
     }
 
-    async findById(userId: string): Promise<User> {
-        return this.userModel.findById(userId).exec();
+    async findById(userId: string): Promise<Partial<User>> {
+        return (await this.userModel.findById(new Types.ObjectId(userId)).lean()) as Partial<User>;
     }
 }

@@ -14,7 +14,6 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { Request, Response } from 'express';
-import CookieHelper from 'src/helpers/cookie.helper';
 import JWTHelper from 'src/helpers/jwt.helper';
 
 @Controller('user')
@@ -55,19 +54,13 @@ export class UserController {
 
             const data = await this.userService.login(email, password);
             if (data) {
-                // Set the refresh token in an HTTP-only cookie
-                CookieHelper.setCookie(res, 'refreshToken', data.refreshToken, {
-                    days: 1 / 24, // 1 hour
-                    httpOnly: true,
-                    sameSite: 'Strict',
-                });
-
                 return res.status(200).json({
                     statusCode: 200,
                     message: 'Login successfully',
                     data: {
                         user: data.user,
                         accessToken: data.accessToken,
+                        refreshToken: data.refreshToken,
                     },
                 });
             }
@@ -79,9 +72,6 @@ export class UserController {
 
     @Get('logout')
     async logout(@Req() req: Request, @Res() res: Response) {
-        // Clear the refresh token in the HTTP-only cookie
-        CookieHelper.eraseCookie(res, 'refreshToken');
-
         await this.userService.logout(req['user']?.id);
         return res.status(200).json({
             statusCode: 200,
@@ -103,7 +93,7 @@ export class UserController {
 
     @Get('invoke-new-tokens')
     async invokeNewTokens(@Req() req: Request, @Res() res: Response) {
-        const refreshToken = CookieHelper.getCookie(req, 'refreshToken');
+        const refreshToken = req.body?.refreshToken;
         if (!refreshToken) {
             throw new BadRequestException('Authorization credential is missing');
         }
@@ -121,19 +111,10 @@ export class UserController {
         }
         const data = (await this.userService.invokeNewTokens(refreshToken, userId)) as { refreshToken: string };
 
-        CookieHelper.setCookie(res, 'refreshToken', data.refreshToken, {
-            days: 1 / 24, // 1 hour
-            httpOnly: true,
-            sameSite: 'Strict',
-        });
-
         return res.status(200).json({
             statusCode: 200,
             message: 'Invoke new tokens successfully',
-            data: {
-                ...data,
-                refreshToken: undefined,
-            },
+            data: data,
         });
     }
 }
