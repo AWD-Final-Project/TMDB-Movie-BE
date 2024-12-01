@@ -9,12 +9,15 @@ import {
     Req,
     Res,
     UnauthorizedException,
+    UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { Request, Response } from 'express';
 import JWTHelper from 'src/helpers/jwt.helper';
+import { GoogleAuthGuard } from 'src/helpers/google.guard.helper';
+// import passport from 'passport';
 
 @Controller('user')
 export class UserController {
@@ -114,6 +117,38 @@ export class UserController {
         return res.status(200).json({
             statusCode: 200,
             message: 'Invoke new tokens successfully',
+            data: data,
+        });
+    }
+
+    // @Get('google/auth')
+    // async googleAuth(@Req() req: Request, @Res() res: Response) {
+    //     passport.authenticate('google', { scope: ['profile', 'email'] })(req, res);
+    // }
+
+    // @Get('google/callback')
+    // async googleLogin(@Req() req: Request, @Res() res: Response) {
+    //     const data = await this.userService.googleLogin(req);
+    //     return res.status(200).json({
+    //         statusCode: 200,
+    //         message: 'Google login successfully',
+    //         data: data,
+    //     });
+    // }
+    @Get('google/auth')
+    @UseGuards(GoogleAuthGuard)
+    async googleAuth() {
+        // This method will be intercepted by the GoogleAuthGuard
+    }
+
+    @Get('google/callback')
+    @UseGuards(GoogleAuthGuard)
+    async googleLogin(@Req() req: Request, @Res() res: Response) {
+        const user = req['user'];
+        const data = await this.userService.googleLogin(user);
+        return res.status(200).json({
+            statusCode: 200,
+            message: 'Google login successfully',
             data: data,
         });
     }

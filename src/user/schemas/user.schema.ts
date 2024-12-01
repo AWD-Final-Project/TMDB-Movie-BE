@@ -26,6 +26,9 @@ export class User extends Document {
     @Prop({ default: 'active' })
     status: string;
 
+    @Prop({ default: 'local' })
+    type: string;
+
     @Prop({ default: '' })
     refreshToken: string;
 }

@@ -4,6 +4,7 @@ dotenv.config();
 
 import { ACCESS_TOKEN_EXPIRE, REFRESH_TOKEN_EXPIRE } from '../configs/time.config';
 import { User } from 'src/user/schemas/user.schema';
+
 class JWTHelper {
     static SECRET = process.env.JWT_SECRET;
 

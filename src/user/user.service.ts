@@ -34,7 +34,7 @@ export class UserService {
         accessToken: string;
         refreshToken: string;
     }> {
-        const foundUser = await this.userModel.findOne({ email });
+        const foundUser = await this.userModel.findOne({ email: email, type: 'local' });
         if (!foundUser) {
             throw new ConflictException('User not found!');
         }
@@ -92,5 +92,46 @@ export class UserService {
 
     async findById(userId: string): Promise<Partial<User>> {
         return (await this.userModel.findById(new Types.ObjectId(userId)).lean()) as Partial<User>;
+    }
+
+    async googleLogin(googleUser: any): Promise<{
+        user: Partial<User>;
+        accessToken: string;
+        refreshToken: string;
+    }> {
+        const email = googleUser.email;
+        const foundUser = await this.userModel.findOne({ email });
+
+        let accessToken = '';
+        let refreshToken = '';
+        let newUser = foundUser;
+
+        if (!newUser) {
+            const hashedPassword = await BcryptHelper.hash(googleUser.id);
+            newUser = await this.userModel.create({
+                email,
+                username: email?.split('@')[0] ?? email,
+                password: hashedPassword,
+                type: 'google',
+            });
+        } else {
+            if (newUser.type !== 'google') {
+                throw new BadRequestException('Email already exists');
+            }
+
+            const isPasswordMatch = await BcryptHelper.compare(googleUser.id, newUser.password);
+            if (isPasswordMatch === false) {
+                throw new BadRequestException('Credentials are incorrect!');
+            }
+        }
+        accessToken = JWTHelper.generateAccessToken(newUser);
+        refreshToken = JWTHelper.generateRefreshToken(newUser);
+
+        await this.userModel.updateOne({ email }, { refreshToken });
+        return {
+            user: UserFilter.makeBasicFilter(newUser),
+            accessToken,
+            refreshToken,
+        };
     }
 }
