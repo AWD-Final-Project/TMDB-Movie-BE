@@ -6,7 +6,6 @@ import BcryptHelper from 'src/helpers/bcrypt.helper';
 import JWTHelper from 'src/helpers/jwt.helper';
 import UserFilter from './user.filter';
 import { Types } from 'mongoose';
-import GoogleHelper from 'src/helpers/google.helper';
 
 @Injectable()
 export class UserService {
@@ -132,16 +131,11 @@ export class UserService {
         };
     }
 
-    async googleVerify(idToken: string): Promise<{
+    async googleVerify(googleUserInfo: { email: string; googleId: string; name: string }): Promise<{
         user: Partial<User>;
         accessToken: string;
         refreshToken: string;
     }> {
-        const googleUserInfo = (await GoogleHelper.verifyIdToken(idToken)) as {
-            email: string;
-            googleId: string;
-            name: string;
-        };
         if (!googleUserInfo || !googleUserInfo.email || !googleUserInfo.googleId) {
             return null;
         }

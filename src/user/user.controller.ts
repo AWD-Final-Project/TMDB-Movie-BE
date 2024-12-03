@@ -18,6 +18,7 @@ import { Request, Response } from 'express';
 import JWTHelper from 'src/helpers/jwt.helper';
 import { GoogleAuthGuard } from 'src/helpers/google.guard.helper';
 import { GoogleVerifyDto } from './dto/google-verify.dto';
+import GoogleHelper from 'src/helpers/google.helper';
 // import passport from 'passport';
 
 @Controller('user')
@@ -158,7 +159,22 @@ export class UserController {
     @UsePipes(new ValidationPipe({ transform: true }))
     async googleVerify(@Body() googleVerifyDto: GoogleVerifyDto, @Res() res: Response) {
         const { idToken } = googleVerifyDto;
-        const data = await this.userService.googleVerify(idToken);
+        let googleUserInfo = {
+            email: '',
+            googleId: '',
+            name: '',
+        };
+        try {
+            googleUserInfo = (await GoogleHelper.verifyIdToken(idToken)) as {
+                email: string;
+                googleId: string;
+                name: string;
+            };
+        } catch (error) {
+            throw new BadRequestException('Google verify error: ' + error.message);
+        }
+
+        const data = await this.userService.googleVerify(googleUserInfo);
         return res.status(200).json({
             statusCode: 200,
             message: 'Google verify successfully',
