@@ -20,7 +20,7 @@ class GoogleHelper {
             };
         } catch (error) {
             console.log('Error verifying Google ID token: ', error);
-            return null;
+            throw new Error('Invalid Google ID token');
         }
     }
 }
