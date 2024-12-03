@@ -6,6 +6,7 @@ import BcryptHelper from 'src/helpers/bcrypt.helper';
 import JWTHelper from 'src/helpers/jwt.helper';
 import UserFilter from './user.filter';
 import { Types } from 'mongoose';
+import GoogleHelper from 'src/helpers/google.helper';
 
 @Injectable()
 export class UserService {
@@ -100,7 +101,7 @@ export class UserService {
         refreshToken: string;
     }> {
         const email = googleUser.email;
-        const foundUser = await this.userModel.findOne({ email });
+        const foundUser = await this.userModel.findOne({ email, type: 'google' });
 
         let accessToken = '';
         let refreshToken = '';
@@ -115,10 +116,6 @@ export class UserService {
                 type: 'google',
             });
         } else {
-            if (newUser.type !== 'google') {
-                throw new BadRequestException('Email already exists');
-            }
-
             const isPasswordMatch = await BcryptHelper.compare(googleUser.id, newUser.password);
             if (isPasswordMatch === false) {
                 throw new BadRequestException('Credentials are incorrect!');
@@ -128,6 +125,50 @@ export class UserService {
         refreshToken = JWTHelper.generateRefreshToken(newUser);
 
         await this.userModel.updateOne({ email }, { refreshToken });
+        return {
+            user: UserFilter.makeBasicFilter(newUser),
+            accessToken,
+            refreshToken,
+        };
+    }
+
+    async googleVerify(idToken: string): Promise<{
+        user: Partial<User>;
+        accessToken: string;
+        refreshToken: string;
+    }> {
+        const googleUserInfo = (await GoogleHelper.verifyIdToken(idToken)) as {
+            email: string;
+            googleId: string;
+            name: string;
+        };
+        if (!googleUserInfo || !googleUserInfo.email || !googleUserInfo.googleId) {
+            return null;
+        }
+
+        const foundUser = await this.userModel.findOne({ email: googleUserInfo.email, type: 'google' });
+        let accessToken = '';
+        let refreshToken = '';
+        let newUser = foundUser;
+
+        if (!newUser) {
+            const hashedPassword = await BcryptHelper.hash(googleUserInfo.googleId);
+            newUser = await this.userModel.create({
+                email: googleUserInfo.email,
+                username: googleUserInfo.name,
+                password: hashedPassword,
+                type: 'google',
+            });
+        } else {
+            const isPasswordMatch = await BcryptHelper.compare(googleUserInfo.googleId, newUser.password);
+            if (isPasswordMatch === false) {
+                throw new BadRequestException('Credentials are incorrect!');
+            }
+        }
+        accessToken = JWTHelper.generateAccessToken(newUser);
+        refreshToken = JWTHelper.generateRefreshToken(newUser);
+
+        await this.userModel.updateOne({ email: newUser.email }, { refreshToken });
         return {
             user: UserFilter.makeBasicFilter(newUser),
             accessToken,

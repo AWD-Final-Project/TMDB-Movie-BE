@@ -17,6 +17,7 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { Request, Response } from 'express';
 import JWTHelper from 'src/helpers/jwt.helper';
 import { GoogleAuthGuard } from 'src/helpers/google.guard.helper';
+import { GoogleVerifyDto } from './dto/google-verify.dto';
 // import passport from 'passport';
 
 @Controller('user')
@@ -149,6 +150,18 @@ export class UserController {
         return res.status(200).json({
             statusCode: 200,
             message: 'Google login successfully',
+            data: data,
+        });
+    }
+
+    @Post('google/verify')
+    @UsePipes(new ValidationPipe({ transform: true }))
+    async googleVerify(@Body() googleVerifyDto: GoogleVerifyDto, @Res() res: Response) {
+        const { idToken } = googleVerifyDto;
+        const data = await this.userService.googleVerify(idToken);
+        return res.status(200).json({
+            statusCode: 200,
+            message: 'Google verify successfully',
             data: data,
         });
     }
