@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './schemas/user.schema';
@@ -6,10 +6,14 @@ import BcryptHelper from 'src/helpers/bcrypt.helper';
 import JWTHelper from 'src/helpers/jwt.helper';
 import UserFilter from './user.filter';
 import { Types } from 'mongoose';
+import { SessionService } from 'src/session/session.service';
 
 @Injectable()
 export class UserService {
-    constructor(@InjectModel(User.name) private readonly userModel: Model<User>) {}
+    constructor(
+        @InjectModel(User.name) private readonly userModel: Model<User>,
+        private readonly sessionService: SessionService,
+    ) {}
 
     async register(email: string, username: string, password: string): Promise<object> {
         const existingUser = await this.userModel.findOne({
@@ -23,6 +27,12 @@ export class UserService {
 
         const newUser = new this.userModel({ email, username, password: hashedPassword });
         const returnedUser = await newUser.save();
+
+        const newUserSession = await this.sessionService.createNewSession(returnedUser._id.toString());
+        if (!newUserSession) {
+            throw new InternalServerErrorException('Something went wrong creating user session');
+        }
+
         return UserFilter.makeBasicFilter(returnedUser);
     }
 
@@ -48,6 +58,7 @@ export class UserService {
         const refreshToken = JWTHelper.generateRefreshToken(foundUser);
         await this.userModel.updateOne({ email }, { refreshToken });
 
+        await this.sessionService.addNewLoginHistory(foundUser._id.toString(), refreshToken);
         return {
             user: UserFilter.makeBasicFilter(foundUser),
             accessToken,
@@ -57,6 +68,11 @@ export class UserService {
 
     async logout(userId: string): Promise<void> {
         await this.userModel.updateOne({ _id: new Types.ObjectId(userId) }, { refreshToken: '' });
+        const foundSession = await this.sessionService.findSessionByUserId(userId);
+        if (!foundSession) {
+            throw new BadRequestException('Session not found');
+        }
+        await this.sessionService.handleLogoutSession(foundSession._id.toString());
     }
 
     async getProfile(userId: string): Promise<object> {
@@ -82,6 +98,7 @@ export class UserService {
         const newRefreshToken = JWTHelper.generateRefreshToken(foundUser);
 
         await this.userModel.updateOne({ _id: foundUser._id }, { refreshToken: newRefreshToken });
+        await this.sessionService.updateSession(foundUser._id.toString(), newRefreshToken);
 
         return {
             user: UserFilter.makeBasicFilter(foundUser),
@@ -114,6 +131,7 @@ export class UserService {
                 password: hashedPassword,
                 type: 'google',
             });
+            await this.sessionService.createNewSession(newUser._id.toString());
         } else {
             const isPasswordMatch = await BcryptHelper.compare(googleUser.id, newUser.password);
             if (isPasswordMatch === false) {
@@ -124,6 +142,8 @@ export class UserService {
         refreshToken = JWTHelper.generateRefreshToken(newUser);
 
         await this.userModel.updateOne({ email }, { refreshToken });
+        await this.sessionService.addNewLoginHistory(newUser._id.toString(), refreshToken);
+
         return {
             user: UserFilter.makeBasicFilter(newUser),
             accessToken,
@@ -153,6 +173,7 @@ export class UserService {
                 password: hashedPassword,
                 type: 'google',
             });
+            await this.sessionService.createNewSession(newUser._id.toString());
         } else {
             const isPasswordMatch = await BcryptHelper.compare(googleUserInfo.googleId, newUser.password);
             if (isPasswordMatch === false) {
@@ -163,6 +184,7 @@ export class UserService {
         refreshToken = JWTHelper.generateRefreshToken(newUser);
 
         await this.userModel.updateOne({ email: newUser.email }, { refreshToken });
+        await this.sessionService.addNewLoginHistory(newUser._id.toString(), refreshToken);
         return {
             user: UserFilter.makeBasicFilter(newUser),
             accessToken,
