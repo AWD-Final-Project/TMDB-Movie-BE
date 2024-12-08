@@ -8,11 +8,11 @@ export class MovieController {
   @Get('trending/day')
   async getTrendingMovies() {
     try{
-      const trendingMoviesData= await this.movieService.getDayTrendingMovies();
+      const trendingMoviesData= await this.movieService.getToDayTrendingMovies();
       if (trendingMoviesData){
         return {
           statusCode: 200,
-          message: 'Trending movies fetched successfully',
+          message: 'Fetched today trending movies successfully',
           data: trendingMoviesData,
         };
       }

@@ -22,7 +22,7 @@ export class MovieService {
         };
         this.fetchGenres();
     }
-    async getDayTrendingMovies() {
+    async getToDayTrendingMovies() {
         const response = await lastValueFrom(this.httpService.get(`${this.baseUrl}/3/trending/movie/day?language=en-US`, this.options));
         const movies = response.data.results.map((movie: any) => {
             const { genre_ids, ...rest } = movie;
