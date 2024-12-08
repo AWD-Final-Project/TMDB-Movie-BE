@@ -22,7 +22,7 @@ export class MovieService {
         };
         this.fetchGenres();
     }
-    async getToDayTrendingMovies() {
+    async fetchToDayTrendingMovies() {
         const response = await lastValueFrom(this.httpService.get(`${this.baseUrl}/3/trending/movie/day?language=en-US`, this.options));
         const movies = response.data.results.map((movie: any) => {
             const { genre_ids, ...rest } = movie;
@@ -35,7 +35,7 @@ export class MovieService {
         return movies;
     }
 
-    async getThisWeekTrendingMovies() {
+    async fetchThisWeekTrendingMovies() {
         const response = await lastValueFrom(this.httpService.get(`${this.baseUrl}/3/trending/movie/week?language=en-US`, this.options));
         const movies = response.data.results.map((movie: any) => {
             const { genre_ids, ...rest } = movie;
@@ -46,6 +46,15 @@ export class MovieService {
         });
 
         return movies;
+    }
+
+    async fetchMovieDetails(movieId:string) {
+        const movieIdInt = parseInt(movieId, 10);
+        if (isNaN(movieIdInt)) {
+            throw new Error('Invalid movie ID');
+        }
+        const response = await lastValueFrom(this.httpService.get(`${this.baseUrl}/3/movie/${movieIdInt}?language=en-US`, this.options));
+        return response.data;
     }
 
     private async fetchGenres() {
