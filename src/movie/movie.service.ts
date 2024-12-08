@@ -2,6 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
+import { SearchMoviesQuery } from './dto/search-movies-query.dto';
 
 @Injectable()
 export class MovieService {
@@ -57,6 +58,28 @@ export class MovieService {
         return response.data;
     }
 
+    async searchMovies(query: SearchMoviesQuery): Promise<any> {
+        const queryParams = new URLSearchParams({
+            query: query.key_word,
+            include_adult: query.include_adult?.toString() || 'false',
+            language: query.language || 'en-US',
+            primary_release_year: query.primary_release_year?.toString() || '',
+            page: query.page?.toString() || '1',
+            region: query.region || '',
+            year: query.year?.toString() || ''
+        });
+    
+        const response = await lastValueFrom(this.httpService.get(`${this.baseUrl}/3/search/movie?${queryParams.toString()}`, this.options));
+        const movies = response.data.results.map((movie: any) => {
+            const { genre_ids, ...rest } = movie;
+            return {
+                ...rest,
+                genres: this.mapGenres(genre_ids)
+            };
+        });
+    
+        return movies;
+    }
     private async fetchGenres() {
         const response = await lastValueFrom(this.httpService.get(`${this.baseUrl}/3/genre/movie/list?language=en-US`, this.options));
         const genres = response.data.genres;
