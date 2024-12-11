@@ -4,6 +4,8 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationExceptionFilter } from './filters/validation-exception.filter';
 import * as passport from 'passport';
 
+declare const module: any;
+
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
     app.enableCors({
@@ -17,5 +19,10 @@ async function bootstrap() {
     app.useGlobalFilters(new ValidationExceptionFilter());
     console.log(`Server is running on http://localhost:${process.env.PORT ?? 3000}`);
     await app.listen(process.env.PORT ?? 3000);
+    if (module.hot) {
+        module.hot.accept();
+        module.hot.dispose(() => app.close());
+      }
 }
+
 bootstrap();

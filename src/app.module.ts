@@ -7,13 +7,18 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './user/user.module';
 import { AuthMiddleware } from './middlewares/auth.middleware';
 import { SessionModule } from './session/session.module';
+import { MovieModule } from './movie/movie.module';
+import tmdbConfig from './configs/tmdb.config';
 
 @Module({
     imports: [
-        ConfigModule.forRoot({ isGlobal: true }),
+        ConfigModule.forRoot({ isGlobal: true,
+            load: [tmdbConfig],
+         }),
         MongooseModule.forRoot(process.env.DATABASE_URI),
         UserModule,
         SessionModule,
+        MovieModule,
     ],
     controllers: [AppController, UserController],
     providers: [AppService],
