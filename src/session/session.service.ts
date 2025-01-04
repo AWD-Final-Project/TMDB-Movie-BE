@@ -1,11 +1,17 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Session } from './schemas/session.schema';
+import { User } from 'src/user/schemas/user.schema';
 import { Model, Types } from 'mongoose';
-
+import { generateOtpCode } from '../utils/otp.util';
+import { MongooseUtil } from '../utils/mongoose.util';
+import { EmailHelper } from 'src/helpers/email.helper';
 @Injectable()
 export class SessionService {
-    constructor(@InjectModel(Session.name) private readonly sessionModel: Model<Session>) {}
+    constructor(
+        @InjectModel(Session.name) private readonly sessionModel: Model<Session>,
+        @InjectModel(User.name) private readonly userModel: Model<User>,
+    ) {}
 
     async createNewSession(userId: string): Promise<Session> {
         const existingSession = await this.sessionModel.findOne({ userId: new Types.ObjectId(userId) });
@@ -78,5 +84,41 @@ export class SessionService {
                 arrayFilters: [{ 'elem.loggedOutAt': { $exists: false } }],
             },
         );
+    }
+
+    async sendOtpToVerifyEmail(userEmail: string): Promise<void> {
+        // Generate OTP
+        const otp = generateOtpCode();
+
+        // Find the user by email
+        const user = await this.userModel.findOne({ email: userEmail });
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+        if (user.status === 'active') {
+            throw new BadRequestException('This account is already activated');
+        }
+
+        // Find the access record for the user
+        const foundAccess = await this.sessionModel.findOne({
+            userId: MongooseUtil.convertToMongooseObjectIdType(user.id),
+        });
+        if (!foundAccess) {
+            throw new BadRequestException('User access record not found');
+        }
+
+        try {
+            // Send the OTP email
+            await EmailHelper.sendEmail(user.email, otp.code.toString());
+
+            // Save the OTP to the access record
+            foundAccess.otp = {
+                code: otp.code,
+                expiredAt: new Date(Date.now() + 5 * 60 * 1000), // OTP valid for 5 minutes
+            };
+            await foundAccess.save();
+        } catch (error) {
+            throw new InternalServerErrorException('Failed to send OTP via email');
+        }
     }
 }

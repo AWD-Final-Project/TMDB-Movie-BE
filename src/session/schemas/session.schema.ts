@@ -29,6 +29,14 @@ export class Session extends Document {
         default: [],
     })
     loginHistory: Array<object>;
+    @Prop({
+        type: {
+            code: { type: String, default: '' },
+            expiredAt: { type: Date, default: Date.now },
+        },
+        default: {},
+    })
+    otp: object;
 }
 
 export const SessionSchema = SchemaFactory.createForClass(Session);

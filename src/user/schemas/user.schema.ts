@@ -23,7 +23,7 @@ export class User extends Document {
     @Prop({ default: 'user' })
     role: string;
 
-    @Prop({ default: 'active' })
+    @Prop({ default: 'inactive' })
     status: string;
 
     @Prop({ default: 'local' })
