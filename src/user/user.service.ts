@@ -49,6 +49,10 @@ export class UserService {
             throw new ConflictException('User not found!');
         }
 
+        if (foundUser.type === 'local' && foundUser.status === 'inactive') {
+            throw new BadRequestException('Please activate your account first!');
+        }
+
         const isPasswordMatch = await BcryptHelper.compare(password, foundUser.password);
         if (isPasswordMatch === false) {
             throw new BadRequestException('Credentials are incorrect!');
