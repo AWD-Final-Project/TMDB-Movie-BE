@@ -23,4 +23,27 @@ export class SessionController {
             throw new BadRequestException('Send active email error: ' + error.message);
         }
     }
+
+    @Post('confirm-activate-otp')
+    async confirmActivateOtp(@Body('email') email: string, @Body('otp') otp: string) {
+        if (!email) {
+            throw new BadRequestException('Email is required');
+        }
+        if (!otp) {
+            throw new BadRequestException('OTP is required');
+        }
+        try {
+            const isOtpValid = await this.sessionService.verifyActivateOTP(email, otp);
+            if (isOtpValid) {
+                return {
+                    statusCode: 200,
+                    message: 'OTP is valid',
+                    data: [],
+                };
+            }
+            throw new BadRequestException('OTP is invalid');
+        } catch (error) {
+            throw new BadRequestException('Confirm OTP error: ' + error.message);
+        }
+    }
 }

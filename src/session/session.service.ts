@@ -113,12 +113,49 @@ export class SessionService {
 
             // Save the OTP to the access record
             foundAccess.otp = {
-                code: otp.code,
+                code: otp.code.toString(),
                 expiredAt: new Date(Date.now() + 5 * 60 * 1000), // OTP valid for 5 minutes
             };
             await foundAccess.save();
         } catch (error) {
             throw new InternalServerErrorException('Failed to send OTP via email');
         }
+    }
+
+    async verifyActivateOTP(userEmail: string, otpCode: string) {
+        // Find the user by email
+        const user = await this.userModel.findOne({ email: userEmail });
+        if (!user) {
+            throw new BadRequestException('User not found');
+        } else if (user.status === 'active') {
+            throw new BadRequestException('This account is already activated');
+        }
+
+        // Find the access record for the user
+        const foundAccess = await this.sessionModel.findOne({
+            userId: MongooseUtil.convertToMongooseObjectIdType(user.id),
+        });
+        if (!foundAccess) {
+            throw new ConflictException('Something went wrong');
+        } else if (!foundAccess?.otp?.code || !foundAccess?.otp?.expiredAt) {
+            throw new ConflictException('OTP code does not exist');
+        }
+
+        const otp = foundAccess.otp;
+
+        // Check if OTP code matches
+        if (otp.code !== otpCode) {
+            throw new ConflictException('OTP code is incorrect');
+        }
+
+        // Check if OTP has expired
+        else if (new Date() > new Date(otp.expiredAt)) {
+            throw new ConflictException('OTP code is expired');
+        }
+
+        // Update email_verified status to true
+        const updatedUser = await this.userModel.updateOne({ email: user.email }, { status: 'active' }, { new: true });
+
+        return updatedUser;
     }
 }

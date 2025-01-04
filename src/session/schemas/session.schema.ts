@@ -2,7 +2,10 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, HydratedDocument, Types } from 'mongoose';
 
 export type SessionDocument = HydratedDocument<Session>;
-
+interface Otp {
+    code: string;
+    expiredAt: Date;
+}
 @Schema({ timestamps: true, collection: 'Sessions' })
 export class Session extends Document {
     @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
@@ -36,7 +39,7 @@ export class Session extends Document {
         },
         default: {},
     })
-    otp: object;
+    otp: Otp;
 }
 
 export const SessionSchema = SchemaFactory.createForClass(Session);
