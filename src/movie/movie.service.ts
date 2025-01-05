@@ -1,11 +1,12 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { lastValueFrom } from 'rxjs';
 import { SearchMoviesQuery } from './dto/search-movies-query.dto';
 import { Movie } from './schemas/movie.schema';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import { DayTrendingMovie } from './schemas/day-trending-movie.schema';
+import { Genre } from './schemas/genre.schema';
+import { WeekTrendingMovie } from './schemas/week-trending-movie.schema';
 
 @Injectable()
 export class MovieService {
@@ -15,26 +16,17 @@ export class MovieService {
     private genresMap: Map<number, string> = new Map();
 
     constructor(
-        private configService: ConfigService,
         private httpService: HttpService,
         @InjectModel(Movie.name) private readonly movieModel: Model<Movie>,
+        @InjectModel(DayTrendingMovie.name) private readonly dayTrendingMovieModel: Model<DayTrendingMovie>,
+        @InjectModel(WeekTrendingMovie.name) private readonly weekTrendingMovieModel: Model<WeekTrendingMovie>,
+        @InjectModel(Genre.name) private readonly genreModel: Model<Genre>,
     ) {
-        this.baseUrl = this.configService.get<string>('movieApiUrl');
-        this.token = this.configService.get<string>('movieApiToken');
-        this.options = {
-            method: 'GET',
-            headers: {
-                accept: 'application/json',
-                Authorization: `Bearer ${this.token}`,
-            },
-        };
         this.fetchGenres();
     }
     async fetchToDayTrendingMovies() {
-        const response = await lastValueFrom(
-            this.httpService.get(`${this.baseUrl}/3/trending/movie/day?language=en-US`, this.options),
-        );
-        const movies = response.data.results.map((movie: any) => {
+        const dayTrendingMovies = await this.dayTrendingMovieModel.find().limit(10).lean();
+        const movies = dayTrendingMovies.map((movie: any) => {
             const { genre_ids, ...rest } = movie;
             return {
                 ...rest,
@@ -46,10 +38,8 @@ export class MovieService {
     }
 
     async fetchThisWeekTrendingMovies() {
-        const response = await lastValueFrom(
-            this.httpService.get(`${this.baseUrl}/3/trending/movie/week?language=en-US`, this.options),
-        );
-        const movies = response.data.results.map((movie: any) => {
+        const weekTrendingMovies = await this.weekTrendingMovieModel.find().limit(10).lean();
+        const movies = weekTrendingMovies.map((movie: any) => {
             const { genre_ids, ...rest } = movie;
             return {
                 ...rest,
@@ -82,7 +72,7 @@ export class MovieService {
         const total = await this.movieModel.countDocuments({ title: { $regex: query.key_word, $options: 'i' } });
 
         return {
-            data: movies,
+            movies,
             pagination: {
                 total,
                 page,
@@ -92,10 +82,7 @@ export class MovieService {
     }
 
     private async fetchGenres() {
-        const response = await lastValueFrom(
-            this.httpService.get(`${this.baseUrl}/3/genre/movie/list?language=en-US`, this.options),
-        );
-        const genres = response.data.genres;
+        const genres = await this.genreModel.find();
         genres.forEach((genre: { id: number; name: string }) => {
             this.genresMap.set(genre.id, genre.name);
         });
