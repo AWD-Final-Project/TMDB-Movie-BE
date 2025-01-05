@@ -6,4 +6,5 @@ export interface SearchMoviesQuery {
     page?: number;
     region?: string;
     year?: number;
+    limit?: number;
 }
