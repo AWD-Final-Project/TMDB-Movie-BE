@@ -3,6 +3,9 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 import { SearchMoviesQuery } from './dto/search-movies-query.dto';
+import { Movie } from './schemas/movie.schema';
+import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class MovieService {
@@ -14,6 +17,7 @@ export class MovieService {
     constructor(
         private configService: ConfigService,
         private httpService: HttpService,
+        @InjectModel(Movie.name) private readonly movieModel: Model<Movie>,
     ) {
         this.baseUrl = this.configService.get<string>('movieApiUrl');
         this.token = this.configService.get<string>('movieApiToken');
@@ -61,10 +65,8 @@ export class MovieService {
         if (isNaN(movieIdInt)) {
             throw new Error('Invalid movie ID');
         }
-        const response = await lastValueFrom(
-            this.httpService.get(`${this.baseUrl}/3/movie/${movieIdInt}?language=en-US`, this.options),
-        );
-        return response.data;
+        const response = await this.movieModel.findOne({ id: movieIdInt });
+        return response;
     }
 
     async searchMovies(query: SearchMoviesQuery): Promise<any> {
