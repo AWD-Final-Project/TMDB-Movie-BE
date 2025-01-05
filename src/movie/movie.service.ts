@@ -70,29 +70,27 @@ export class MovieService {
     }
 
     async searchMovies(query: SearchMoviesQuery): Promise<any> {
-        const queryParams = new URLSearchParams({
-            query: query.key_word,
-            include_adult: query.include_adult?.toString() || 'false',
-            language: query.language || 'en-US',
-            primary_release_year: query.primary_release_year?.toString() || '',
-            page: query.page?.toString() || '1',
-            region: query.region || '',
-            year: query.year?.toString() || '',
-        });
+        const limit = query.limit || 10;
+        const page = query.page || 1;
+        const skip = (page - 1) * limit;
 
-        const response = await lastValueFrom(
-            this.httpService.get(`${this.baseUrl}/3/search/movie?${queryParams.toString()}`, this.options),
-        );
-        const movies = response.data.results.map((movie: any) => {
-            const { genre_ids, ...rest } = movie;
-            return {
-                ...rest,
-                genres: this.mapGenres(genre_ids),
-            };
-        });
+        const movies = await this.movieModel
+            .find({ title: { $regex: query.key_word, $options: 'i' } })
+            .skip(skip)
+            .limit(limit);
 
-        return movies;
+        const total = await this.movieModel.countDocuments({ title: { $regex: query.key_word, $options: 'i' } });
+
+        return {
+            data: movies,
+            pagination: {
+                total,
+                page,
+                limit,
+            },
+        };
     }
+
     private async fetchGenres() {
         const response = await lastValueFrom(
             this.httpService.get(`${this.baseUrl}/3/genre/movie/list?language=en-US`, this.options),
