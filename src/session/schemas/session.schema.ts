@@ -40,6 +40,14 @@ export class Session extends Document {
         default: {},
     })
     otp: Otp;
+    @Prop({
+        type: {
+            code: { type: String, default: '' },
+            expiredAt: { type: Date, default: Date.now },
+        },
+        default: {},
+    })
+    otpResetPassword: Otp;
 }
 
 export const SessionSchema = SchemaFactory.createForClass(Session);

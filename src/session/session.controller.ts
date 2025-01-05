@@ -46,4 +46,22 @@ export class SessionController {
             throw new BadRequestException('Confirm OTP error: ' + error.message);
         }
     }
+    @Post('send-reset-pass-email')
+    async sendResetPassEmail(@Body('email') email: string) {
+        if (!email) {
+            throw new BadRequestException('Email is required');
+        }
+
+        try {
+            await this.sessionService.sendOtpToResetPassword(email);
+
+            return {
+                statusCode: 200,
+                message: 'Send reset password email successfully',
+                data: [],
+            };
+        } catch (error) {
+            throw new BadRequestException('Send reset password email error: ' + error.message);
+        }
+    }
 }

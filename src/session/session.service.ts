@@ -158,4 +158,37 @@ export class SessionService {
 
         return updatedUser;
     }
+
+    async sendOtpToResetPassword(userEmail: string): Promise<void> {
+        // Generate OTP
+        const otp = generateOtpCode();
+
+        // Find the user by email
+        const user = await this.userModel.findOne({ email: userEmail });
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+
+        // Find the access record for the user
+        const foundAccess = await this.sessionModel.findOne({
+            userId: MongooseUtil.convertToMongooseObjectIdType(user.id),
+        });
+        if (!foundAccess) {
+            throw new BadRequestException('User access record not found');
+        }
+
+        try {
+            // Send the OTP email
+            await EmailHelper.sendResetPasswordEmail(user.email, otp.code.toString());
+
+            // Save the OTP to the access record
+            foundAccess.otpResetPassword = {
+                code: otp.code.toString(),
+                expiredAt: new Date(Date.now() + 5 * 60 * 1000), // OTP valid for 5 minutes
+            };
+            await foundAccess.save();
+        } catch (error) {
+            throw new InternalServerErrorException('Failed to send OTP via email');
+        }
+    }
 }
