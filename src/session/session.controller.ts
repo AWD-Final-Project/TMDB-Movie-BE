@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Post, Req } from '@nestjs/common';
 import { SessionService } from './session.service';
 
 @Controller('verify')
@@ -62,6 +62,58 @@ export class SessionController {
             };
         } catch (error) {
             throw new BadRequestException('Send reset password email error: ' + error.message);
+        }
+    }
+    @Post('confirm-reset-pass-otp')
+    async confirmResetPassOtp(@Body('email') email: string, @Body('otp') otp: string) {
+        if (!email) {
+            throw new BadRequestException('Email is required');
+        }
+        if (!otp) {
+            throw new BadRequestException('OTP is required');
+        }
+        try {
+            const result = await this.sessionService.verifyResetPasswordOTP(email, otp);
+            if (result) {
+                return {
+                    statusCode: 200,
+                    message: 'OTP is valid',
+                    data: result,
+                };
+            }
+            throw new BadRequestException('OTP is invalid');
+        } catch (error) {
+            throw new BadRequestException('Confirm OTP error: ' + error.message);
+        }
+    }
+
+    @Post('reset-password')
+    async resetPassword(
+        @Req() req: Request,
+        @Body('password') password: string,
+        @Body('confirmPassword') confirmPassword: string,
+    ) {
+        if (!password) {
+            throw new BadRequestException('Password is required');
+        }
+        if (!confirmPassword) {
+            throw new BadRequestException('Confirm password is required');
+        }
+        if (password !== confirmPassword) {
+            throw new BadRequestException('Password and confirm password do not match');
+        }
+        try {
+            const userId = req['user'].id;
+            const result = await this.sessionService.resetPassword(userId, password);
+            if (result) {
+                return {
+                    statusCode: 200,
+                    message: 'Reset password successfully',
+                    data: result,
+                };
+            }
+        } catch (error) {
+            throw new BadRequestException('Reset password error: ' + error.message);
         }
     }
 }

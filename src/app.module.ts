@@ -12,9 +12,7 @@ import tmdbConfig from './configs/tmdb.config';
 
 @Module({
     imports: [
-        ConfigModule.forRoot({ isGlobal: true,
-            load: [tmdbConfig],
-         }),
+        ConfigModule.forRoot({ isGlobal: true, load: [tmdbConfig] }),
         MongooseModule.forRoot(process.env.DATABASE_URI),
         UserModule,
         SessionModule,
@@ -28,5 +26,6 @@ export class AppModule {
         consumer.apply(AuthMiddleware).forRoutes({ path: 'user/profile', method: RequestMethod.GET });
         consumer.apply(AuthMiddleware).forRoutes({ path: 'user/logout', method: RequestMethod.GET });
         consumer.apply(AuthMiddleware).forRoutes({ path: 'user/invoke-new-token', method: RequestMethod.POST });
+        consumer.apply(AuthMiddleware).forRoutes({ path: 'verify/reset-password', method: RequestMethod.POST });
     }
 }

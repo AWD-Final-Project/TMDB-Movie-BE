@@ -6,6 +6,9 @@ import { Model, Types } from 'mongoose';
 import { generateOtpCode } from '../utils/otp.util';
 import { MongooseUtil } from '../utils/mongoose.util';
 import { EmailHelper } from 'src/helpers/email.helper';
+import JWTHelper from 'src/helpers/jwt.helper';
+import BcryptHelper from 'src/helpers/bcrypt.helper';
+import UserFilter from 'src/user/user.filter';
 @Injectable()
 export class SessionService {
     constructor(
@@ -190,5 +193,56 @@ export class SessionService {
         } catch (error) {
             throw new InternalServerErrorException('Failed to send OTP via email');
         }
+    }
+
+    async verifyResetPasswordOTP(userEmail: string, otpCode: string) {
+        // Find the user by email
+        const user = await this.userModel.findOne({ email: userEmail });
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+
+        // Find the access record for the user
+        const foundAccess = await this.sessionModel.findOne({
+            userId: MongooseUtil.convertToMongooseObjectIdType(user.id),
+        });
+        if (!foundAccess) {
+            throw new ConflictException('Something went wrong');
+        } else if (!foundAccess?.otpResetPassword?.code || !foundAccess?.otpResetPassword?.expiredAt) {
+            throw new ConflictException('OTP code does not exist');
+        }
+
+        const otp = foundAccess.otpResetPassword;
+
+        // Check if OTP code matches
+        if (otp.code !== otpCode) {
+            throw new ConflictException('OTP code is incorrect');
+        }
+
+        // Check if OTP has expired
+        else if (new Date() > new Date(otp.expiredAt)) {
+            throw new ConflictException('OTP code is expired');
+        }
+
+        const accessToken = JWTHelper.generateAccessToken(user);
+        return {
+            userId: user.id,
+            accessToken,
+        };
+    }
+    async resetPassword(userId: string, newPassword: string) {
+        const foundUser = await this.userModel.findOne({ _id: new Types.ObjectId(userId) });
+        if (!foundUser) {
+            throw new BadRequestException('User not found');
+        }
+        const foundAccess = await this.sessionModel.findOne({ userId: new Types.ObjectId(userId) });
+        if (!foundAccess) {
+            throw new BadRequestException('User access record not found');
+        }
+        // Update the password
+        const hashedPassword = await BcryptHelper.hash(newPassword);
+        await this.userModel.updateOne({ _id: new Types.ObjectId(userId) }, { password: hashedPassword });
+
+        return UserFilter.makeBasicFilter(foundUser);
     }
 }
