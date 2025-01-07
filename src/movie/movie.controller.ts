@@ -69,15 +69,19 @@ export class MovieController {
             if (!movieId) {
                 throw new BadRequestException('Movie id is required to fetch details');
             }
-            const movieDetailsData = await this.movieService.fetchMovieDetails(movieId);
+            const movieIdInt = parseInt(movieId, 10);
+            if (isNaN(movieIdInt)) {
+                throw new BadRequestException('Invalid movie ID');
+            }
+            const movieDetailsData = await this.movieService.fetchMovieDetails(movieIdInt);
             if (movieDetailsData) {
                 return {
                     statusCode: 200,
-                    message: 'Fetched movie details successfully',
+                    message: 'Fetched movie with details successfully',
                     data: movieDetailsData,
                 };
             }
-            throw new BadRequestException('Failed to get movie details');
+            throw new BadRequestException('Not found movie details');
         } catch (error) {
             throw new BadRequestException('Get movie details error: ' + error.message);
         }

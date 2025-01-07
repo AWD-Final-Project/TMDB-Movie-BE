@@ -50,12 +50,11 @@ export class MovieService {
         return movies;
     }
 
-    async fetchMovieDetails(movieId: string) {
-        const movieIdInt = parseInt(movieId, 10);
-        if (isNaN(movieIdInt)) {
-            throw new Error('Invalid movie ID');
+    async fetchMovieDetails(movieId: number) {
+        const response = await this.movieModel.findOne({ id: movieId });
+        if (!response) {
+            throw new Error('Movie not found');
         }
-        const response = await this.movieModel.findOne({ id: movieIdInt });
         return response;
     }
 

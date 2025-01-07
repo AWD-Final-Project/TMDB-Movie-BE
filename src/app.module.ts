@@ -8,6 +8,7 @@ import { UserModule } from './user/user.module';
 import { AuthMiddleware } from './middlewares/auth.middleware';
 import { SessionModule } from './session/session.module';
 import { MovieModule } from './movie/movie.module';
+import { CastModule } from './cast/cast.module';
 import tmdbConfig from './configs/tmdb.config';
 
 @Module({
@@ -17,6 +18,7 @@ import tmdbConfig from './configs/tmdb.config';
         UserModule,
         SessionModule,
         MovieModule,
+        CastModule,
     ],
     controllers: [AppController, UserController],
     providers: [AppService],
