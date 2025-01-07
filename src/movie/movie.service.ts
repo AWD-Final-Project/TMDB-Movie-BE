@@ -51,7 +51,7 @@ export class MovieService {
     }
 
     async fetchMovieDetails(movieId: number) {
-        const response = await this.movieModel.findOne({ id: movieId });
+        const response = await this.movieModel.findOne({ tmdb_id: movieId });
         if (!response) {
             throw new Error('Movie not found');
         }

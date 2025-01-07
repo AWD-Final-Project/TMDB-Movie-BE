@@ -13,17 +13,21 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { LoginUserDto } from './dto/login-user.dto';
 import { Request, Response } from 'express';
 import JWTHelper from 'src/helpers/jwt.helper';
 import { GoogleAuthGuard } from 'src/helpers/google.guard.helper';
 import { GoogleVerifyDto } from './dto/google-verify.dto';
 import GoogleHelper from 'src/helpers/google.helper';
-// import passport from 'passport';
+import { LocalAuthGuard } from 'src/auth/auth.local-guard';
+import { AuthService } from 'src/auth/auth.service';
+import { JwtAuthGuard } from 'src/auth/auth.jwt-guard';
 
 @Controller('user')
 export class UserController {
-    constructor(private readonly userService: UserService) {}
+    constructor(
+        private readonly userService: UserService,
+        private readonly authService: AuthService,
+    ) {}
 
     @Post('register')
     @UsePipes(new ValidationPipe({ transform: true }))
@@ -48,33 +52,28 @@ export class UserController {
         }
     }
 
+    @UseGuards(LocalAuthGuard)
     @Post('login')
     @UsePipes(new ValidationPipe({ transform: true }))
-    async login(@Body() loginUserDto: LoginUserDto, @Res() res: Response) {
-        try {
-            const { email, password } = loginUserDto;
-            if (!email || !password) {
-                throw new BadRequestException('Email and username and password are required');
-            }
-
-            const data = await this.userService.login(email, password);
-            if (data) {
-                return res.status(200).json({
-                    statusCode: 200,
-                    message: 'Login successfully',
-                    data: {
-                        user: data.user,
-                        accessToken: data.accessToken,
-                        refreshToken: data.refreshToken,
-                    },
-                });
-            }
-            throw new BadRequestException('Failed to login');
-        } catch (error) {
-            throw new BadRequestException('Login error: ' + error.message);
-        }
+    async loginV2(@Req() req: Request, @Res() res: Response) {
+        const user = req['user'];
+        const data = await this.authService.login(user);
+        return res.status(200).json({
+            statusCode: 200,
+            message: 'Login successfully',
+            data: {
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    username: user.username,
+                },
+                accessToken: data.access_token,
+                refreshToken: data.refresh_token,
+            },
+        });
     }
 
+    @UseGuards(JwtAuthGuard)
     @Get('logout')
     async logout(@Req() req: Request, @Res() res: Response) {
         await this.userService.logout(req['user']?.id);
@@ -84,6 +83,7 @@ export class UserController {
         });
     }
 
+    @UseGuards(JwtAuthGuard)
     @Get('profile')
     async getProfile(@Req() req: Request) {
         const user = req['user'];
@@ -96,6 +96,7 @@ export class UserController {
         };
     }
 
+    @UseGuards(JwtAuthGuard)
     @Get('invoke-new-tokens')
     async invokeNewTokens(@Req() req: Request, @Res() res: Response) {
         const refreshToken = req.body?.refreshToken;
@@ -123,20 +124,6 @@ export class UserController {
         });
     }
 
-    // @Get('google/auth')
-    // async googleAuth(@Req() req: Request, @Res() res: Response) {
-    //     passport.authenticate('google', { scope: ['profile', 'email'] })(req, res);
-    // }
-
-    // @Get('google/callback')
-    // async googleLogin(@Req() req: Request, @Res() res: Response) {
-    //     const data = await this.userService.googleLogin(req);
-    //     return res.status(200).json({
-    //         statusCode: 200,
-    //         message: 'Google login successfully',
-    //         data: data,
-    //     });
-    // }
     @Get('google/auth')
     @UseGuards(GoogleAuthGuard)
     async googleAuth() {

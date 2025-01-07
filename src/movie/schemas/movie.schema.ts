@@ -6,7 +6,7 @@ export type MovieDocument = HydratedDocument<Movie>;
 @Schema({ timestamps: true, collection: 'Movies' })
 export class Movie extends Document {
     @Prop({ required: true, unique: true })
-    tmdbId: number;
+    tmdb_id: number;
 
     @Prop({ default: false })
     adult: boolean;
