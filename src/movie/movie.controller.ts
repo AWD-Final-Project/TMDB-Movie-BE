@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Get, Param, Query } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Param, Query, UsePipes, ValidationPipe } from '@nestjs/common';
 import { MovieService } from './movie.service';
 import { SearchMoviesQuery } from './dto/search-movies-query.dto';
 
@@ -40,6 +40,7 @@ export class MovieController {
     }
 
     @Get('search')
+    @UsePipes(new ValidationPipe({ transform: true }))
     async searchMovies(@Query() query: SearchMoviesQuery) {
         try {
             if (!query) {
