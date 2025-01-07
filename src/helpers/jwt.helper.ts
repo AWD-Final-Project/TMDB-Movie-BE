@@ -5,11 +5,11 @@ dotenv.config();
 import { ACCESS_TOKEN_EXPIRE, REFRESH_TOKEN_EXPIRE } from '../configs/time.config';
 import { User } from 'src/user/schemas/user.schema';
 
-class JWTHelper {
-    static SECRET = process.env.JWT_SECRET;
+import { JWT_SECRET } from '../configs/secret.config';
 
+class JWTHelper {
     static generateToken(payload: object, expiresIn: string): string {
-        return jwt.sign(payload, JWTHelper.SECRET, { expiresIn });
+        return jwt.sign(payload, JWT_SECRET, { expiresIn });
     }
 
     static generateAccessToken(payload: Partial<User>): string {
@@ -35,8 +35,8 @@ class JWTHelper {
         );
     }
 
-    static verifyToken(token: string): object {
-        return jwt.verify(token, JWTHelper.SECRET);
+    static verifyToken(token: string): any {
+        return jwt.verify(token, JWT_SECRET);
     }
 
     static checkIfTokenExpiredError(error: any): boolean {

@@ -115,6 +115,10 @@ export class UserService {
         return (await this.userModel.findById(new Types.ObjectId(userId)).lean()) as Partial<User>;
     }
 
+    async findByEmail(userEmail: string): Promise<Partial<User>> {
+        return (await this.userModel.findOne({ email: userEmail }).lean()) as Partial<User>;
+    }
+
     async googleLogin(googleUser: any): Promise<{
         user: Partial<User>;
         accessToken: string;
