@@ -59,22 +59,45 @@ export class MovieService {
     }
 
     async searchMovies(query: SearchMoviesQuery): Promise<any> {
+        const { key_word, language, region, include_adult, year } = query;
         const limit = query.limit || 10;
         const page = query.page || 1;
         const skip = (page - 1) * limit;
+        const filter_field = query.filter_field || 'title';
 
-        const movies = await this.movieModel
-            .find({ title: { $regex: query.key_word, $options: 'i' } })
-            .skip(skip)
-            .limit(limit);
+        const filter: any = {
+            [filter_field]: { $regex: key_word, $options: 'i' },
+        };
+        if (language) {
+            filter['original_language'] = language;
+        }
+        if (region) {
+            // Handle single or multiple regions dynamically
+            filter['origin_country'] = { $in: [region] };
+        }
+        if (include_adult) {
+            filter['adult'] = include_adult;
+        }
+        if (year) {
+            filter['release_date'] = {
+                $gte: `${year}-01-01`,
+                $lte: `${year}-12-31`,
+            };
+        }
 
-        const total = await this.movieModel.countDocuments({ title: { $regex: query.key_word, $options: 'i' } });
+        console.log('Filter: ');
+        console.log(filter);
+
+        const movies = await this.movieModel.find(filter).skip(skip).limit(limit);
+        const total = await this.movieModel.countDocuments(filter);
 
         return {
             movies,
-            pagination: {
+            meta: {
                 total,
+                totalAmount: movies.length,
                 page,
+                totalPage: Math.ceil(total / limit),
                 limit,
             },
         };
