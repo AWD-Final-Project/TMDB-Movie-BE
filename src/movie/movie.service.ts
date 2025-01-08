@@ -90,4 +90,12 @@ export class MovieService {
     private mapGenres(genreIds: number[]): string[] {
         return genreIds.map(id => this.genresMap.get(id) || 'Unknown');
     }
+
+    async fetchPopularMovies(): Promise<any[]> {
+        const popularMovies = await this.movieModel.find().sort({ popularity: -1 }).limit(10).lean();
+        if (!popularMovies) {
+            return [];
+        }
+        return popularMovies;
+    }
 }

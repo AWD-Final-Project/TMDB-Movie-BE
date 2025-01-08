@@ -16,6 +16,7 @@ class UserFilter {
             username: user?.username,
             fullname: user?.fullname,
             address: user?.address,
+            status: user?.status,
         };
     }
 }

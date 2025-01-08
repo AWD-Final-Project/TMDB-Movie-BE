@@ -63,6 +63,22 @@ export class MovieController {
         }
     }
 
+    @Get('popular')
+    async getPopularMovies() {
+        try {
+            const popularMoviesData = await this.movieService.fetchPopularMovies();
+            if (popularMoviesData) {
+                return {
+                    statusCode: 200,
+                    message: 'Fetched popular movies successfully',
+                    data: popularMoviesData,
+                };
+            }
+            throw new BadRequestException('Failed to get popular movies');
+        } catch (error) {
+            throw new BadRequestException('Get popular movies error: ' + error.message);
+        }
+    }
     @Get(':movie_id')
     async getMovieDetails(@Param('movie_id') movieId: string) {
         try {
