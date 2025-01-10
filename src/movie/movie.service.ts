@@ -1,4 +1,5 @@
 import { HttpService } from '@nestjs/axios';
+import { ObjectId } from 'mongodb';
 import { Injectable } from '@nestjs/common';
 import { SearchMoviesQuery } from './dto/search-movies-query.dto';
 import { Movie } from './schemas/movie.schema';
@@ -50,8 +51,8 @@ export class MovieService {
         return movies;
     }
 
-    async fetchMovieDetails(movieId: number) {
-        const response = await this.movieModel.findOne({ tmdb_id: movieId });
+    async fetchMovieDetails(movieId: string): Promise<any> {
+        const response = await this.movieModel.findOne({ _id: new ObjectId(movieId) }).lean();
         if (!response) {
             throw new Error('Movie not found');
         }

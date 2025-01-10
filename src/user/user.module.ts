@@ -15,14 +15,16 @@ import { HttpModule } from '@nestjs/axios';
 import { DayTrendingMovie, DayTrendingMovieSchema } from 'src/movie/schemas/day-trending-movie.schema';
 import { WeekTrendingMovie, WeekTrendingMovieSchema } from 'src/movie/schemas/week-trending-movie.schema';
 import { Genre, GenreSchema } from 'src/movie/schemas/genre.schema';
+import { FavoriteMovie, FavoriteMovieSchema } from './schemas/favorite-movie.schema';
 
 @Module({
     imports: [
         MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]), // Register User schema here
-        MongooseModule.forFeature([{ name: Movie.name, schema: MovieSchema }]), // Register User schema here
+        MongooseModule.forFeature([{ name: Movie.name, schema: MovieSchema }]), // Register movie schema here
         MongooseModule.forFeature([{ name: DayTrendingMovie.name, schema: DayTrendingMovieSchema }]),
         MongooseModule.forFeature([{ name: WeekTrendingMovie.name, schema: WeekTrendingMovieSchema }]),
         MongooseModule.forFeature([{ name: Genre.name, schema: GenreSchema }]),
+        MongooseModule.forFeature([{ name: FavoriteMovie.name, schema: FavoriteMovieSchema }]), // Register FavoriteMovie schema here
         SessionModule,
         HttpModule,
     ],

@@ -8,12 +8,15 @@ import UserFilter from './user.filter';
 import { Types } from 'mongoose';
 import { SessionService } from 'src/session/session.service';
 import { Movie } from 'src/movie/schemas/movie.schema';
+import { FavoriteMovie } from './schemas/favorite-movie.schema';
+import { ObjectId } from 'mongoose';
 
 @Injectable()
 export class UserService {
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<User>,
         @InjectModel(Movie.name) private readonly movieModel: Model<Movie>,
+        @InjectModel(FavoriteMovie.name) private readonly favoriteMovieModel: Model<FavoriteMovie>,
         private readonly sessionService: SessionService,
     ) {}
 
@@ -205,7 +208,7 @@ export class UserService {
     async voteRating(movieId: string, rating: number): Promise<any> {
         {
             try {
-                const foundMovie = await this.movieModel.findOne({ tmdb_id: movieId });
+                const foundMovie = await this.movieModel.findOne({ _id: new Types.ObjectId(movieId) });
                 if (!foundMovie) {
                     throw new BadRequestException('Movie not found');
                 }
@@ -213,7 +216,7 @@ export class UserService {
                 const newVoteAverage = (foundMovie.vote_average * foundMovie.vote_count + rating) / newVoteCount;
 
                 await this.movieModel.updateOne(
-                    { tmdb_id: movieId },
+                    { _id: new Types.ObjectId(movieId) },
                     { vote_average: newVoteAverage, vote_count: newVoteCount },
                 );
 
@@ -226,7 +229,7 @@ export class UserService {
         }
     }
     async addReview(user: any, movieId: string, content: string): Promise<any> {
-        const foundMovie = await this.movieModel.findOne({ tmdb_id: movieId });
+        const foundMovie = await this.movieModel.findOne({ _id: new Types.ObjectId(movieId) });
         if (!foundMovie) {
             throw new BadRequestException('Movie not found');
         }
@@ -250,5 +253,46 @@ export class UserService {
         await foundMovie.save();
 
         return review;
+    }
+    async addToFavorite(user: any, movieId: string): Promise<any> {
+        const foundMovie = await this.movieModel.findOne({ _id: new Types.ObjectId(movieId) });
+        if (!foundMovie) {
+            throw new BadRequestException('Movie not found');
+        }
+
+        const foundUserFavorite = await this.favoriteMovieModel.findOne({ user_id: user.id });
+        if (!foundUserFavorite) {
+            const favoriteMovie = new this.favoriteMovieModel({
+                user_id: user.id,
+                favorites: [foundMovie._id],
+            });
+            await favoriteMovie.save();
+            return favoriteMovie;
+        } else {
+            const foundFavorite = await this.favoriteMovieModel.findOne({
+                user_id: user.id,
+                favorites: foundMovie._id,
+            });
+            if (foundFavorite) {
+                throw new ConflictException(`Movie with ID ${movieId} is already in the favorite list`);
+            }
+            foundUserFavorite.favorites.push(foundMovie._id as Types.ObjectId);
+            await foundUserFavorite.save();
+            return foundUserFavorite;
+        }
+    }
+
+    async removeFromFavorite(user: any, movieId: string): Promise<void> {
+        const foundFavoriteUser = await this.favoriteMovieModel.findOne({ user_id: user.id });
+        if (!foundFavoriteUser) {
+            throw new BadRequestException('Favorite movie not found');
+        }
+        const index = foundFavoriteUser.favorites.indexOf(new Types.ObjectId(movieId));
+        if (index > -1) {
+            foundFavoriteUser.favorites.splice(index, 1);
+            await foundFavoriteUser.save();
+        } else {
+            throw new BadRequestException('Movie not found in favorites');
+        }
     }
 }

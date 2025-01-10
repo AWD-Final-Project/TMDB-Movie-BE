@@ -81,16 +81,15 @@ export class MovieController {
         }
     }
     @Get(':movie_id')
-    async getMovieDetails(@Param('movie_id') movieId: string) {
+    async getMovieDetails(
+        @Param('movie_id') movieId: string,
+    ): Promise<{ statusCode: number; message: string; data: any }> {
         try {
             if (!movieId) {
                 throw new BadRequestException('Movie id is required to fetch details');
             }
-            const movieIdInt = parseInt(movieId, 10);
-            if (isNaN(movieIdInt)) {
-                throw new BadRequestException('Invalid movie ID');
-            }
-            const movieDetailsData = await this.movieService.fetchMovieDetails(movieIdInt);
+
+            const movieDetailsData = await this.movieService.fetchMovieDetails(movieId);
             if (movieDetailsData) {
                 return {
                     statusCode: 200,

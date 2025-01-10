@@ -6,19 +6,14 @@ import { CastService } from './cast.service';
 export class CastController {
     constructor(private readonly castService: CastService) {}
 
-    @Get(':id')
-    async getCastById(@Param('id') id: string) {
+    @Get(':cast_id')
+    async getCastById(@Param('cast_id') id: string) {
         try {
             if (!id) {
                 throw new BadRequestException('Cast id is required to fetch details');
             }
 
-            const castIdInt = parseInt(id);
-            if (isNaN(castIdInt)) {
-                throw new BadRequestException('Invalid cast ID');
-            }
-
-            const castData = await this.castService.getCastById(castIdInt);
+            const castData = await this.castService.getCastById(id);
             if (castData) {
                 return {
                     statusCode: 200,

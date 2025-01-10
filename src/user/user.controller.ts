@@ -10,6 +10,7 @@ import {
     Res,
     UnauthorizedException,
     UseGuards,
+    Delete,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -205,6 +206,41 @@ export class UserController {
             statusCode: 200,
             message: 'Review added successfully',
             data: review,
+        });
+    }
+    @UseGuards(JwtAuthGuard)
+    @Post('add-to-favorite')
+    @UsePipes(new ValidationPipe({ transform: true }))
+    async addToFavorite(@Req() req: Request, @Body() body: any, @Res() res: Response) {
+        const user = req['user'];
+        const { movieId } = body;
+        if (!movieId) {
+            throw new BadRequestException('Movie ID is required');
+        }
+        console.log('user', user);
+
+        const favoriteMovie = await this.userService.addToFavorite(user, movieId);
+        return res.status(201).json({
+            statusCode: 201,
+            message: 'Movie added to favorite list successfully',
+            data: favoriteMovie,
+        });
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete('remove-from-favorite')
+    @UsePipes(new ValidationPipe({ transform: true }))
+    async removeFromFavorite(@Req() req: Request, @Body() body: any, @Res() res: Response) {
+        const user = req['user'];
+        const { movieId } = body;
+        if (!movieId) {
+            throw new BadRequestException('Movie ID is required');
+        }
+
+        await this.userService.removeFromFavorite(user, movieId);
+        return res.status(200).json({
+            statusCode: 200,
+            message: 'Movie removed from favorite list successfully',
         });
     }
 }
