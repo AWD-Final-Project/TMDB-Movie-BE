@@ -374,4 +374,41 @@ export class UserService {
             throw new BadRequestException('Movie not found in watch list');
         }
     }
+
+    async fetchWatchListMovies(user: any): Promise<any> {
+        const watchListMovies = await this.watchListMovieModel.findOne({ user_id: user.id }).lean();
+        if (!watchListMovies) {
+            return [];
+        }
+        const movies = await this.movieModel.find({ _id: { $in: watchListMovies.watch_list } }).lean();
+        const moviesFilters = [];
+        for (const movie of movies) {
+            const {
+                id,
+                title,
+                overview,
+                release_date,
+                poster_path,
+                backdrop_path,
+                popularity,
+                vote_average,
+                vote_count,
+                genres,
+            } = movie;
+            const movieFilter = {
+                id,
+                title,
+                overview,
+                release_date,
+                poster_path,
+                backdrop_path,
+                popularity,
+                vote_average,
+                vote_count,
+                genres,
+            };
+            moviesFilters.push(movieFilter);
+        }
+        return moviesFilters;
+    }
 }

@@ -288,4 +288,16 @@ export class UserController {
             message: 'Movie removed from watch list successfully',
         });
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('watchlist-movies')
+    async getWatchListMovies(@Req() req: Request, @Res() res: Response) {
+        const user = req['user'];
+        const watchListMovies = await this.userService.fetchWatchListMovies(user);
+        return res.status(200).json({
+            statusCode: 200,
+            message: 'Get watchlist movies successfully',
+            data: watchListMovies,
+        });
+    }
 }
