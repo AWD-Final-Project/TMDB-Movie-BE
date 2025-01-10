@@ -209,9 +209,7 @@ export class UserService {
                 if (!foundMovie) {
                     throw new BadRequestException('Movie not found');
                 }
-                console.log('foundMovie: ', foundMovie.vote_count);
                 const newVoteCount = foundMovie.vote_count + 1;
-                console.log('newVoteCount: ', newVoteCount);
                 const newVoteAverage = (foundMovie.vote_average * foundMovie.vote_count + rating) / newVoteCount;
 
                 await this.movieModel.updateOne(
@@ -226,5 +224,31 @@ export class UserService {
                 throw new InternalServerErrorException(error.message);
             }
         }
+    }
+    async addReview(user: any, movieId: string, content: string): Promise<any> {
+        const foundMovie = await this.movieModel.findOne({ tmdb_id: movieId });
+        if (!foundMovie) {
+            throw new BadRequestException('Movie not found');
+        }
+
+        const review = {
+            author: user.username,
+            author_details: {
+                name: user.name,
+                username: user.username,
+                avatar_path: user.avatar_path,
+                rating: 8,
+            },
+            content: content,
+            created_at: new Date(),
+            id: new Types.ObjectId().toString(),
+            updated_at: new Date(),
+            url: `https://www.themoviedb.org/review/${new Types.ObjectId().toString()}`,
+        };
+
+        foundMovie.reviews.push(review);
+        await foundMovie.save();
+
+        return review;
     }
 }

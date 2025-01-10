@@ -190,4 +190,21 @@ export class UserController {
         });
         1;
     }
+    @UseGuards(JwtAuthGuard)
+    @Post('add-review')
+    @UsePipes(new ValidationPipe({ transform: true }))
+    async addReview(@Req() req: Request, @Body() body: any, @Res() res: Response) {
+        const user = req['user'];
+        const { movieId, content } = body;
+        if (!movieId || !content) {
+            throw new BadRequestException('Movie ID and content are required');
+        }
+
+        const review = await this.userService.addReview(user, movieId, content);
+        return res.status(201).json({
+            statusCode: 200,
+            message: 'Review added successfully',
+            data: review,
+        });
+    }
 }

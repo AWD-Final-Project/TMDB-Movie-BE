@@ -243,6 +243,39 @@ export class Movie extends Document {
         published_at: Date;
         id: string;
     }[];
+    @Prop({
+        type: [
+            {
+                author: { type: String },
+                author_details: {
+                    name: { type: String },
+                    username: { type: String },
+                    avatar_path: { type: String },
+                    rating: { type: Number },
+                },
+                content: { type: String },
+                created_at: { type: Date },
+                id: { type: String },
+                updated_at: { type: Date },
+                url: { type: String },
+            },
+        ],
+        default: [],
+    })
+    reviews: {
+        author: string;
+        author_details: {
+            name: string;
+            username: string;
+            avatar_path: string;
+            rating: number;
+        };
+        content: string;
+        created_at: Date;
+        id: string;
+        updated_at: Date;
+        url: string;
+    }[];
 }
 
 export const MovieSchema = SchemaFactory.createForClass(Movie);
