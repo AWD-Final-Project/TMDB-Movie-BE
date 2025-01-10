@@ -9,7 +9,6 @@ import { Types } from 'mongoose';
 import { SessionService } from 'src/session/session.service';
 import { Movie } from 'src/movie/schemas/movie.schema';
 import { FavoriteMovie } from './schemas/favorite-movie.schema';
-import { ObjectId } from 'mongoose';
 
 @Injectable()
 export class UserService {
@@ -246,7 +245,7 @@ export class UserService {
             created_at: new Date(),
             id: new Types.ObjectId().toString(),
             updated_at: new Date(),
-            url: `https://www.themoviedb.org/review/${new Types.ObjectId().toString()}`,
+            url: '',
         };
 
         foundMovie.reviews.push(review);
@@ -285,7 +284,7 @@ export class UserService {
     async removeFromFavorite(user: any, movieId: string): Promise<void> {
         const foundFavoriteUser = await this.favoriteMovieModel.findOne({ user_id: user.id });
         if (!foundFavoriteUser) {
-            throw new BadRequestException('Favorite movie not found');
+            throw new BadRequestException('Not found data favorite movies of user');
         }
         const index = foundFavoriteUser.favorites.indexOf(new Types.ObjectId(movieId));
         if (index > -1) {
@@ -294,5 +293,41 @@ export class UserService {
         } else {
             throw new BadRequestException('Movie not found in favorites');
         }
+    }
+    async fetchFavoriteMovies(user: any): Promise<any> {
+        const favoriteMovies = await this.favoriteMovieModel.findOne({ user_id: user.id }).lean();
+        if (!favoriteMovies) {
+            return [];
+        }
+        const movies = await this.movieModel.find({ _id: { $in: favoriteMovies.favorites } }).lean();
+        const moviesFilters = [];
+        for (const movie of movies) {
+            const {
+                id,
+                title,
+                overview,
+                release_date,
+                poster_path,
+                backdrop_path,
+                popularity,
+                vote_average,
+                vote_count,
+                genres,
+            } = movie;
+            const movieFilter = {
+                id,
+                title,
+                overview,
+                release_date,
+                poster_path,
+                backdrop_path,
+                popularity,
+                vote_average,
+                vote_count,
+                genres,
+            };
+            moviesFilters.push(movieFilter);
+        }
+        return moviesFilters;
     }
 }

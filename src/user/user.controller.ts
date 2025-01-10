@@ -243,4 +243,16 @@ export class UserController {
             message: 'Movie removed from favorite list successfully',
         });
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('favorite-movies')
+    async getFavoriteMovies(@Req() req: Request, @Res() res: Response) {
+        const user = req['user'];
+        const favoriteMovies = await this.userService.fetchFavoriteMovies(user);
+        return res.status(200).json({
+            statusCode: 200,
+            message: 'Get favorite movies successfully',
+            data: favoriteMovies,
+        });
+    }
 }
