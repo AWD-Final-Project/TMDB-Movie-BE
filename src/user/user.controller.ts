@@ -271,4 +271,21 @@ export class UserController {
             data: watchListMovie,
         });
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete('remove-from-watchlist')
+    @UsePipes(new ValidationPipe({ transform: true }))
+    async removeFromWatchList(@Req() req: Request, @Body() body: any, @Res() res: Response) {
+        const user = req['user'];
+        const { movieId } = body;
+        if (!movieId) {
+            throw new BadRequestException('Movie ID is required');
+        }
+
+        await this.userService.removeFromWatchList(user, movieId);
+        return res.status(200).json({
+            statusCode: 200,
+            message: 'Movie removed from watch list successfully',
+        });
+    }
 }

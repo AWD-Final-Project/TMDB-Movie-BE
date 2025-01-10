@@ -360,4 +360,18 @@ export class UserService {
             return foundUserWatchList;
         }
     }
+
+    async removeFromWatchList(user: any, movieId: string): Promise<any> {
+        const foundWatchListUser = await this.watchListMovieModel.findOne({ user_id: user.id });
+        if (!foundWatchListUser) {
+            throw new BadRequestException('Not found data watch list of user');
+        }
+        const index = foundWatchListUser.watch_list.indexOf(new Types.ObjectId(movieId));
+        if (index > -1) {
+            foundWatchListUser.watch_list.splice(index, 1);
+            await foundWatchListUser.save();
+        } else {
+            throw new BadRequestException('Movie not found in watch list');
+        }
+    }
 }
