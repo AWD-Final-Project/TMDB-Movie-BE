@@ -7,11 +7,13 @@ import JWTHelper from 'src/helpers/jwt.helper';
 import UserFilter from './user.filter';
 import { Types } from 'mongoose';
 import { SessionService } from 'src/session/session.service';
+import { Movie } from 'src/movie/schemas/movie.schema';
 
 @Injectable()
 export class UserService {
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<User>,
+        @InjectModel(Movie.name) private readonly movieModel: Model<Movie>,
         private readonly sessionService: SessionService,
     ) {}
 
@@ -198,5 +200,31 @@ export class UserService {
             accessToken,
             refreshToken,
         };
+    }
+
+    async voteRating(movieId: string, rating: number): Promise<any> {
+        {
+            try {
+                const foundMovie = await this.movieModel.findOne({ tmdb_id: movieId });
+                if (!foundMovie) {
+                    throw new BadRequestException('Movie not found');
+                }
+                console.log('foundMovie: ', foundMovie.vote_count);
+                const newVoteCount = foundMovie.vote_count + 1;
+                console.log('newVoteCount: ', newVoteCount);
+                const newVoteAverage = (foundMovie.vote_average * foundMovie.vote_count + rating) / newVoteCount;
+
+                await this.movieModel.updateOne(
+                    { tmdb_id: movieId },
+                    { vote_average: newVoteAverage, vote_count: newVoteCount },
+                );
+
+                return {
+                    message: 'Rating updated successfully',
+                };
+            } catch (error) {
+                throw new InternalServerErrorException(error.message);
+            }
+        }
     }
 }

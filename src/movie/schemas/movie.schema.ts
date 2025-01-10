@@ -12,22 +12,22 @@ export class Movie extends Document {
     adult: boolean;
 
     @Prop({ default: '' })
-    backdropPath: string;
+    backdrop_path: string;
 
     @Prop({
         type: {
             id: { type: Number },
             name: { type: String },
-            posterPath: { type: String },
-            backdropPath: { type: String },
+            poster_path: { type: String },
+            backdrop_path: { type: String },
         },
         default: null,
     })
-    belongsToCollection: {
+    belongs_to_collection: {
         id: number;
         name: string;
-        posterPath: string;
-        backdropPath: string;
+        poster_path: string;
+        backdrop_path: string;
     };
 
     @Prop({ default: 0 })
@@ -51,16 +51,16 @@ export class Movie extends Document {
     homepage: string;
 
     @Prop({ required: true })
-    imdbId: string;
+    imdb_id: string;
 
     @Prop({ type: [String], default: [] })
-    originCountry: string[];
+    origin_country: string[];
 
     @Prop({ required: true })
-    originalLanguage: string;
+    original_language: string;
 
     @Prop({ required: true })
-    originalTitle: string;
+    original_title: string;
 
     @Prop({ default: '' })
     overview: string;
@@ -69,42 +69,42 @@ export class Movie extends Document {
     popularity: number;
 
     @Prop({ default: '' })
-    posterPath: string;
+    poster_path: string;
 
     @Prop({
         type: [
             {
                 id: { type: Number },
-                logoPath: { type: String },
+                logo_path: { type: String },
                 name: { type: String },
-                originCountry: { type: String },
+                origin_country: { type: String },
             },
         ],
         default: [],
     })
-    productionCompanies: {
+    production_companies: {
         id: number;
-        logoPath: string;
+        logo_path: string;
         name: string;
-        originCountry: string;
+        origin_country: string;
     }[];
 
     @Prop({
         type: [
             {
-                iso31661: { type: String },
+                iso_3166_1: { type: String },
                 name: { type: String },
             },
         ],
         default: [],
     })
-    productionCountries: {
-        iso31661: string;
+    production_countries: {
+        iso_3166_1: string;
         name: string;
     }[];
 
     @Prop({ required: true })
-    releaseDate: string;
+    release_date: string;
 
     @Prop({ default: 0 })
     revenue: number;
@@ -115,16 +115,16 @@ export class Movie extends Document {
     @Prop({
         type: [
             {
-                englishName: { type: String },
-                iso6391: { type: String },
+                english_name: { type: String },
+                iso_639_1: { type: String },
                 name: { type: String },
             },
         ],
         default: [],
     })
-    spokenLanguages: {
-        englishName: string;
-        iso6391: string;
+    spoken_languages: {
+        english_name: string;
+        iso_639_1: string;
         name: string;
     }[];
 
@@ -141,10 +141,10 @@ export class Movie extends Document {
     video: boolean;
 
     @Prop({ default: 0 })
-    voteAverage: number;
+    vote_average: number;
 
     @Prop({ default: 0 })
-    voteCount: number;
+    vote_count: number;
 
     @Prop({
         type: {
@@ -154,14 +154,14 @@ export class Movie extends Document {
                     adult: { type: Boolean },
                     gender: { type: Number },
                     id: { type: Number },
-                    knownForDepartment: { type: String },
+                    known_for_department: { type: String },
                     name: { type: String },
-                    originalName: { type: String },
+                    original_name: { type: String },
                     popularity: { type: Number },
-                    profilePath: { type: String },
-                    castId: { type: Number },
+                    profile_path: { type: String },
+                    cast_id: { type: Number },
                     character: { type: String },
-                    creditId: { type: String },
+                    credit_id: { type: String },
                     order: { type: Number },
                 },
             ],
@@ -170,12 +170,12 @@ export class Movie extends Document {
                     adult: { type: Boolean },
                     gender: { type: Number },
                     id: { type: Number },
-                    knownForDepartment: { type: String },
+                    known_for_department: { type: String },
                     name: { type: String },
-                    originalName: { type: String },
+                    original_name: { type: String },
                     popularity: { type: Number },
-                    profilePath: { type: String },
-                    creditId: { type: String },
+                    profile_path: { type: String },
+                    credit_id: { type: String },
                     department: { type: String },
                     job: { type: String },
                 },
@@ -189,30 +189,60 @@ export class Movie extends Document {
             adult: boolean;
             gender: number;
             id: number;
-            knownForDepartment: string;
+            known_for_department: string;
             name: string;
-            originalName: string;
+            original_name: string;
             popularity: number;
-            profilePath: string;
-            castId: number;
+            profile_path: string;
+            cast_id: number;
             character: string;
-            creditId: string;
+            credit_id: string;
             order: number;
         }[];
         crew: {
             adult: boolean;
             gender: number;
             id: number;
-            knownForDepartment: string;
+            known_for_department: string;
             name: string;
-            originalName: string;
+            original_name: string;
             popularity: number;
-            profilePath: string;
-            creditId: string;
+            profile_path: string;
+            credit_id: string;
             department: string;
             job: string;
         }[];
     };
+
+    @Prop({
+        type: [
+            {
+                iso_639_1: { type: String },
+                iso_3166_1: { type: String },
+                name: { type: String },
+                key: { type: String },
+                site: { type: String },
+                size: { type: Number },
+                type: { type: String },
+                official: { type: Boolean },
+                published_at: { type: Date },
+                id: { type: String },
+            },
+        ],
+        default: [],
+    })
+    trailers: {
+        iso_639_1: string;
+        iso_3166_1: string;
+        name: string;
+        key: string;
+        site: string;
+        size: number;
+        type: string;
+        official: boolean;
+        published_at: Date;
+        id: string;
+    }[];
 }
 
 export const MovieSchema = SchemaFactory.createForClass(Movie);

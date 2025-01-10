@@ -168,4 +168,26 @@ export class UserController {
             data: data,
         });
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('vote-rating')
+    @UsePipes(new ValidationPipe({ transform: true }))
+    async voteRating(@Req() req: Request, @Res() res: Response) {
+        const user = req['user'];
+        const { movieId, value } = req.body;
+        if (!movieId || !value) {
+            throw new BadRequestException('Movie ID and rating value are required');
+        }
+        if (value < 0 || value > 10) {
+            throw new BadRequestException('value must be between 0 and 10');
+        }
+
+        await this.userService.voteRating(movieId, value);
+        return res.status(200).json({
+            statusCode: 200,
+            message: 'Vote value successfully',
+            data: [],
+        });
+        1;
+    }
 }

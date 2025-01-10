@@ -9,13 +9,24 @@ import { GoogleAuthGuard } from 'src/helpers/google.guard.helper';
 import { SessionModule } from 'src/session/session.module';
 import { AuthService } from 'src/auth/auth.service';
 import { JwtService } from '@nestjs/jwt';
+import { Movie, MovieSchema } from 'src/movie/schemas/movie.schema';
+import { MovieService } from 'src/movie/movie.service';
+import { HttpModule } from '@nestjs/axios';
+import { DayTrendingMovie, DayTrendingMovieSchema } from 'src/movie/schemas/day-trending-movie.schema';
+import { WeekTrendingMovie, WeekTrendingMovieSchema } from 'src/movie/schemas/week-trending-movie.schema';
+import { Genre, GenreSchema } from 'src/movie/schemas/genre.schema';
 
 @Module({
     imports: [
         MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]), // Register User schema here
+        MongooseModule.forFeature([{ name: Movie.name, schema: MovieSchema }]), // Register User schema here
+        MongooseModule.forFeature([{ name: DayTrendingMovie.name, schema: DayTrendingMovieSchema }]),
+        MongooseModule.forFeature([{ name: WeekTrendingMovie.name, schema: WeekTrendingMovieSchema }]),
+        MongooseModule.forFeature([{ name: Genre.name, schema: GenreSchema }]),
         SessionModule,
+        HttpModule,
     ],
-    providers: [UserService, GoogleStrategy, GoogleAuthGuard, AuthService, JwtService],
+    providers: [UserService, GoogleStrategy, GoogleAuthGuard, AuthService, JwtService, MovieService],
     controllers: [UserController],
     exports: [UserService], // Export UserService if it's used in other modules
 })
