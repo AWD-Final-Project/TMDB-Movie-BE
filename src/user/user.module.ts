@@ -16,6 +16,7 @@ import { DayTrendingMovie, DayTrendingMovieSchema } from 'src/movie/schemas/day-
 import { WeekTrendingMovie, WeekTrendingMovieSchema } from 'src/movie/schemas/week-trending-movie.schema';
 import { Genre, GenreSchema } from 'src/movie/schemas/genre.schema';
 import { FavoriteMovie, FavoriteMovieSchema } from './schemas/favorite-movie.schema';
+import { WatchListMovie, WatchListMovieMovieSchema } from './schemas/watchlist-movie.schema';
 
 @Module({
     imports: [
@@ -25,6 +26,7 @@ import { FavoriteMovie, FavoriteMovieSchema } from './schemas/favorite-movie.sch
         MongooseModule.forFeature([{ name: WeekTrendingMovie.name, schema: WeekTrendingMovieSchema }]),
         MongooseModule.forFeature([{ name: Genre.name, schema: GenreSchema }]),
         MongooseModule.forFeature([{ name: FavoriteMovie.name, schema: FavoriteMovieSchema }]), // Register FavoriteMovie schema here
+        MongooseModule.forFeature([{ name: WatchListMovie.name, schema: WatchListMovieMovieSchema }]), // Register FavoriteMovie schema here
         SessionModule,
         HttpModule,
     ],

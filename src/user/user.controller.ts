@@ -217,8 +217,6 @@ export class UserController {
         if (!movieId) {
             throw new BadRequestException('Movie ID is required');
         }
-        console.log('user', user);
-
         const favoriteMovie = await this.userService.addToFavorite(user, movieId);
         return res.status(201).json({
             statusCode: 201,
@@ -253,6 +251,24 @@ export class UserController {
             statusCode: 200,
             message: 'Get favorite movies successfully',
             data: favoriteMovies,
+        });
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('add-to-watchlist')
+    @UsePipes(new ValidationPipe({ transform: true }))
+    async addToWatchList(@Req() req: Request, @Body() body: any, @Res() res: Response) {
+        const user = req['user'];
+        const { movieId } = body;
+        if (!movieId) {
+            throw new BadRequestException('Movie ID is required');
+        }
+
+        const watchListMovie = await this.userService.addToWatchList(user, movieId);
+        return res.status(201).json({
+            statusCode: 201,
+            message: 'Movie added to watch list successfully',
+            data: watchListMovie,
         });
     }
 }

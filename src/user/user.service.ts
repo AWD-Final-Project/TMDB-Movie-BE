@@ -9,6 +9,7 @@ import { Types } from 'mongoose';
 import { SessionService } from 'src/session/session.service';
 import { Movie } from 'src/movie/schemas/movie.schema';
 import { FavoriteMovie } from './schemas/favorite-movie.schema';
+import { WatchListMovie } from './schemas/watchlist-movie.schema';
 
 @Injectable()
 export class UserService {
@@ -16,6 +17,7 @@ export class UserService {
         @InjectModel(User.name) private readonly userModel: Model<User>,
         @InjectModel(Movie.name) private readonly movieModel: Model<Movie>,
         @InjectModel(FavoriteMovie.name) private readonly favoriteMovieModel: Model<FavoriteMovie>,
+        @InjectModel(WatchListMovie.name) private readonly watchListMovieModel: Model<WatchListMovie>,
         private readonly sessionService: SessionService,
     ) {}
 
@@ -329,5 +331,33 @@ export class UserService {
             moviesFilters.push(movieFilter);
         }
         return moviesFilters;
+    }
+
+    async addToWatchList(user: any, movieId: string): Promise<any> {
+        const foundMovie = await this.movieModel.findOne({ _id: new Types.ObjectId(movieId) });
+        if (!foundMovie) {
+            throw new BadRequestException('Movie not found');
+        }
+
+        const foundUserWatchList = await this.watchListMovieModel.findOne({ user_id: user.id });
+        if (!foundUserWatchList) {
+            const watchListMovie = new this.watchListMovieModel({
+                user_id: user.id,
+                watchlist: [foundMovie._id],
+            });
+            await watchListMovie.save();
+            return watchListMovie;
+        } else {
+            const foundWatchList = await this.watchListMovieModel.findOne({
+                user_id: user.id,
+                watch_list: foundMovie._id,
+            });
+            if (foundWatchList) {
+                throw new ConflictException(`Movie with ID ${movieId} is already in the watch list`);
+            }
+            foundUserWatchList.watch_list.push(foundMovie._id as Types.ObjectId);
+            await foundUserWatchList.save();
+            return foundUserWatchList;
+        }
     }
 }
