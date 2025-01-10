@@ -56,7 +56,18 @@ export class MovieService {
         if (!response) {
             throw new Error('Movie not found');
         }
-        return response;
+        let youtubeTrailerURL = '';
+        if (response.trailers && response.trailers.length > 0) {
+            const firstTrailer = response.trailers[0];
+            if (firstTrailer.key) {
+                youtubeTrailerURL = `https://www.youtube.com/watch?v=${firstTrailer.key}`;
+            }
+        }
+
+        return {
+            ...response,
+            youtubeTrailerURL,
+        };
     }
 
     async searchMovies(query: SearchMoviesQuery): Promise<any> {
