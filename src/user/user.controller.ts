@@ -174,6 +174,7 @@ export class UserController {
     @Post('vote-rating')
     @UsePipes(new ValidationPipe({ transform: true }))
     async voteRating(@Req() req: Request, @Res() res: Response) {
+        const user = req['user'];
         const { movieId, value } = req.body;
         if (!movieId || !value) {
             throw new BadRequestException('Movie ID and rating value are required');
