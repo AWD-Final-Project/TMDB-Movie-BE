@@ -17,6 +17,7 @@ import { WeekTrendingMovie, WeekTrendingMovieSchema } from 'src/movie/schemas/we
 import { Genre, GenreSchema } from 'src/movie/schemas/genre.schema';
 import { FavoriteMovie, FavoriteMovieSchema } from './schemas/favorite-movie.schema';
 import { WatchListMovie, WatchListMovieMovieSchema } from './schemas/watchlist-movie.schema';
+import { UserRatingList, UserRatingListSchema } from './schemas/user-rating-list.schema';
 
 @Module({
     imports: [
@@ -25,8 +26,9 @@ import { WatchListMovie, WatchListMovieMovieSchema } from './schemas/watchlist-m
         MongooseModule.forFeature([{ name: DayTrendingMovie.name, schema: DayTrendingMovieSchema }]),
         MongooseModule.forFeature([{ name: WeekTrendingMovie.name, schema: WeekTrendingMovieSchema }]),
         MongooseModule.forFeature([{ name: Genre.name, schema: GenreSchema }]),
-        MongooseModule.forFeature([{ name: FavoriteMovie.name, schema: FavoriteMovieSchema }]), // Register FavoriteMovie schema here
-        MongooseModule.forFeature([{ name: WatchListMovie.name, schema: WatchListMovieMovieSchema }]), // Register FavoriteMovie schema here
+        MongooseModule.forFeature([{ name: FavoriteMovie.name, schema: FavoriteMovieSchema }]),
+        MongooseModule.forFeature([{ name: WatchListMovie.name, schema: WatchListMovieMovieSchema }]),
+        MongooseModule.forFeature([{ name: UserRatingList.name, schema: UserRatingListSchema }]),
         SessionModule,
         HttpModule,
     ],

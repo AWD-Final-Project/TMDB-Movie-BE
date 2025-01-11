@@ -182,13 +182,26 @@ export class UserController {
             throw new BadRequestException('value must be between 0 and 10');
         }
 
-        await this.userService.voteRating(movieId, value);
+        await this.userService.voteRating(user, movieId, value);
         return res.status(200).json({
             statusCode: 200,
             message: 'Vote value successfully',
             data: [],
         });
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('rating-list')
+    async getRatingList(@Req() req: Request, @Res() res: Response) {
+        const user = req['user'];
+        const ratingList = await this.userService.fetchRatingList(user);
+        return res.status(200).json({
+            statusCode: 200,
+            message: 'Get rating list successfully',
+            data: ratingList,
+        });
+    }
+
     @UseGuards(JwtAuthGuard)
     @Post('add-review')
     @UsePipes(new ValidationPipe({ transform: true }))

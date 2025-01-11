@@ -10,6 +10,7 @@ import { SessionService } from 'src/session/session.service';
 import { Movie } from 'src/movie/schemas/movie.schema';
 import { FavoriteMovie } from './schemas/favorite-movie.schema';
 import { WatchListMovie } from './schemas/watchlist-movie.schema';
+import { UserRatingList } from './schemas/user-rating-list.schema';
 
 @Injectable()
 export class UserService {
@@ -18,6 +19,7 @@ export class UserService {
         @InjectModel(Movie.name) private readonly movieModel: Model<Movie>,
         @InjectModel(FavoriteMovie.name) private readonly favoriteMovieModel: Model<FavoriteMovie>,
         @InjectModel(WatchListMovie.name) private readonly watchListMovieModel: Model<WatchListMovie>,
+        @InjectModel(UserRatingList.name) private readonly userRatingListModel: Model<UserRatingList>,
         private readonly sessionService: SessionService,
     ) {}
 
@@ -206,7 +208,7 @@ export class UserService {
         };
     }
 
-    async voteRating(movieId: string, rating: number): Promise<any> {
+    async voteRating(user: any, movieId: string, rating: number): Promise<any> {
         {
             try {
                 const foundMovie = await this.movieModel.findOne({ _id: new Types.ObjectId(movieId) });
@@ -221,6 +223,44 @@ export class UserService {
                     { vote_average: newVoteAverage, vote_count: newVoteCount },
                 );
 
+                const foundUserRating = await this.userRatingListModel.findOne({
+                    user_id: user.id,
+                });
+                console.log(foundUserRating);
+                if (!foundUserRating) {
+                    const newUserRating = new this.userRatingListModel({
+                        user_id: user.id,
+                        rating_list: [
+                            {
+                                movie_id: new Types.ObjectId(movieId),
+                                rating: rating,
+                            },
+                        ],
+                    });
+                    await newUserRating.save();
+                } else {
+                    const foundRating = await this.userRatingListModel.findOne({
+                        user_id: user.id,
+                        rating_list: {
+                            $elemMatch: {
+                                movie_id: new Types.ObjectId(movieId),
+                            },
+                        },
+                    });
+                    if (foundRating) {
+                        await this.userRatingListModel.updateOne(
+                            { user_id: user.id, 'rating_list.movieId': foundMovie._id },
+                            { $set: { 'rating_list.$.rating': rating } },
+                        );
+                    } else {
+                        foundUserRating.rating_list.push({
+                            movie_id: new Types.ObjectId(movieId),
+                            rating: rating,
+                        });
+                    }
+                    await foundUserRating.save();
+                }
+
                 return {
                     message: 'Rating updated successfully',
                 };
@@ -228,6 +268,32 @@ export class UserService {
                 throw new InternalServerErrorException(error.message);
             }
         }
+    }
+
+    async fetchRatingList(user: any): Promise<any> {
+        const foundUserRating = await this.userRatingListModel.findOne({ user_id: user.id }).lean();
+        if (!foundUserRating) {
+            return [];
+        }
+        const movies = await this.movieModel
+            .find({ _id: { $in: foundUserRating.rating_list.map(item => item.movie_id) } })
+            .lean();
+        const moviesFilters = [];
+        for (const movie of movies) {
+            const { id, title, poster_path, backdrop_path, popularity, vote_average, vote_count, genres } = movie;
+            const movieFilter = {
+                id,
+                title,
+                poster_path,
+                backdrop_path,
+                popularity,
+                vote_average,
+                vote_count,
+                genres,
+            };
+            moviesFilters.push(movieFilter);
+        }
+        return moviesFilters;
     }
     async addReview(user: any, movieId: string, content: string): Promise<any> {
         const foundMovie = await this.movieModel.findOne({ _id: new Types.ObjectId(movieId) });
