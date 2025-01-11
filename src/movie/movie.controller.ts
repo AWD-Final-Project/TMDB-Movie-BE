@@ -80,6 +80,7 @@ export class MovieController {
             throw new BadRequestException('Get popular movies error: ' + error.message);
         }
     }
+
     @Get(':movie_id')
     async getMovieDetails(
         @Param('movie_id') movieId: string,
@@ -100,6 +101,32 @@ export class MovieController {
             throw new BadRequestException('Not found movie details');
         } catch (error) {
             throw new BadRequestException('Get movie details error: ' + error.message);
+        }
+    }
+
+    @Get(':movie_id/recommendations')
+    async getMovieRecommendations(
+        @Param('movie_id') movieId: string,
+    ): Promise<{ statusCode: number; message: string; data: any }> {
+        try {
+            if (!movieId) {
+                throw new BadRequestException('Movie id is required to fetch recommendations');
+            }
+
+            const movieRecommendationsData = await this.movieService.fetchMovieRecommendationsByGenre(movieId);
+            if (movieRecommendationsData) {
+                return {
+                    statusCode: 200,
+                    message: 'Fetched movie recommendations successfully',
+                    data: {
+                        genreRecommendations: movieRecommendationsData ?? [],
+                        AIRecommendations: [],
+                    },
+                };
+            }
+            throw new BadRequestException('Not found movie recommendations');
+        } catch (error) {
+            throw new BadRequestException('Get movie recommendations error: ' + error.message);
         }
     }
 }

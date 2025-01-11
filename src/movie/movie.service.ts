@@ -96,10 +96,6 @@ export class MovieService {
                 $lte: `${year}-12-31`,
             };
         }
-
-        console.log('Filter: ');
-        console.log(filter);
-
         const movies = await this.movieModel.find(filter).skip(skip).limit(limit);
         const total = await this.movieModel.countDocuments(filter);
 
@@ -132,5 +128,23 @@ export class MovieService {
             return [];
         }
         return popularMovies;
+    }
+
+    async fetchMovieRecommendationsByGenre(movieId: string): Promise<any[]> {
+        const movie = await this.movieModel.findOne({ _id: new ObjectId(movieId) }).lean();
+        if (!movie) {
+            throw new Error('Movie not found');
+        }
+
+        const recommendGenres = movie.genres.map(genre => genre.name);
+
+        const recommendations = await this.movieModel
+            .find({
+                _id: { $ne: new ObjectId(movieId) }, // Exclude the original movie
+                'genres.name': { $in: recommendGenres }, // Match genre names
+            })
+            .limit(10)
+            .lean();
+        return recommendations;
     }
 }
