@@ -98,7 +98,7 @@ export class UserController {
     }
 
     @UseGuards(JwtAuthGuard)
-    @Get('invoke-new-tokens')
+    @Post('invoke-new-tokens')
     async invokeNewTokens(@Req() req: Request, @Res() res: Response) {
         const refreshToken = req.body?.refreshToken;
         if (!refreshToken) {
