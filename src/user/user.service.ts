@@ -483,4 +483,16 @@ export class UserService {
         }
         return moviesFilters;
     }
+
+    async getMyVoteRatingOfMovie(user: any, movieId: string): Promise<any> {
+        const foundUserRating = await this.userRatingListModel.findOne({ user_id: user.id });
+        if (!foundUserRating) {
+            throw new BadRequestException('User rating not found');
+        }
+        const foundRating = foundUserRating.rating_list.find(item => item.movie_id.toString() === movieId.toString());
+        if (!foundRating) {
+            throw new BadRequestException('Rating not found');
+        }
+        return foundRating.rating;
+    }
 }

@@ -312,4 +312,19 @@ export class UserController {
             data: watchListMovies,
         });
     }
+    @UseGuards(JwtAuthGuard)
+    @Get('my-vote-rating/:movieId')
+    async getMyVoteRatingOfMovie(@Req() req: Request, @Res() res: Response) {
+        const user = req['user'];
+        const { movieId } = req.params;
+        if (!movieId) {
+            throw new BadRequestException('Movie ID is required');
+        }
+        const myVoteRating = await this.userService.getMyVoteRatingOfMovie(user, movieId);
+        return res.status(200).json({
+            statusCode: 200,
+            message: 'Get my vote rating of movie successfully',
+            data: myVoteRating,
+        });
+    }
 }
