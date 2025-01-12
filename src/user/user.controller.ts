@@ -187,7 +187,7 @@ export class UserController {
         return res.status(200).json({
             statusCode: 200,
             message: 'Vote value successfully',
-            data: [],
+            data: value,
         });
     }
 
