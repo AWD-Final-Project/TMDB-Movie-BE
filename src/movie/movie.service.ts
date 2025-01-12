@@ -147,4 +147,38 @@ export class MovieService {
             .lean();
         return recommendations;
     }
+    async fetchLatestTrailer(): Promise<any[]> {
+        const latestMovies = await this.movieModel
+            .find({ 'trailers.key': { $ne: null } })
+            .sort({ release_date: -1 })
+            .limit(10)
+            .lean();
+        if (!latestMovies || latestMovies.length === 0) {
+            return [];
+        }
+
+        const moviesWithTrailers = latestMovies.map(movie => {
+            const { trailers, title, release_date, backdrop_path, poster_path, vote_average, vote_count, popularity } =
+                movie;
+            let youtubeTrailerURL = '';
+            if (trailers && trailers.length > 0) {
+                const firstTrailer = trailers[0];
+                if (firstTrailer.key) {
+                    youtubeTrailerURL = `https://www.youtube.com/watch?v=${firstTrailer.key}`;
+                }
+            }
+            return {
+                title,
+                release_date,
+                backdrop_path,
+                poster_path,
+                vote_average,
+                vote_count,
+                popularity,
+                youtubeTrailerURL,
+            };
+        });
+
+        return moviesWithTrailers;
+    }
 }

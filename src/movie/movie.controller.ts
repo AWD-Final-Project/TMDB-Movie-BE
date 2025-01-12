@@ -80,7 +80,22 @@ export class MovieController {
             throw new BadRequestException('Get popular movies error: ' + error.message);
         }
     }
-
+    @Get('lastest-trailer')
+    async getLastestTrailer() {
+        try {
+            const lastestTrailerData = await this.movieService.fetchLatestTrailer();
+            if (lastestTrailerData) {
+                return {
+                    statusCode: 200,
+                    message: 'Fetched lastest trailer successfully',
+                    data: lastestTrailerData,
+                };
+            }
+            throw new BadRequestException('Failed to get lastest trailer');
+        } catch (error) {
+            throw new BadRequestException('Get lastest trailer error: ' + error.message);
+        }
+    }
     @Get(':movie_id')
     async getMovieDetails(
         @Param('movie_id') movieId: string,
