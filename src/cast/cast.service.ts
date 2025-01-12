@@ -8,8 +8,8 @@ import { ObjectId } from 'mongodb';
 export class CastService {
     constructor(@InjectModel(Cast.name) private readonly castModel: Model<CastDocument>) {}
 
-    async getCastById(id: string): Promise<any> {
-        const data = await this.castModel.findOne({ _id: new ObjectId(id) }).lean();
+    async getCastById(id: number): Promise<any> {
+        const data = await this.castModel.findOne({ tmdb_id: id }).lean();
         return data;
     }
 }

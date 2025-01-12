@@ -88,8 +88,12 @@ export class MovieController {
             if (!movieId) {
                 throw new BadRequestException('Movie id is required to fetch details');
             }
+            const movieIdInt = parseInt(movieId);
+            if (isNaN(movieIdInt)) {
+                throw new BadRequestException('Movie id must be a number');
+            }
 
-            const movieDetailsData = await this.movieService.fetchMovieDetails(movieId);
+            const movieDetailsData = await this.movieService.fetchMovieDetails(movieIdInt);
             if (movieDetailsData) {
                 return {
                     statusCode: 200,
