@@ -92,7 +92,7 @@ async def sync_with_auto_retry(request: SyncWithAutoRetryRequest = Depends()):
 
         # Retry logic
         if request.retry_count < request.max_retries:
-            return sync_with_auto_retry(
+            return await sync_with_auto_retry(
                 SyncWithAutoRetryRequest(
                     llm_api_key= request.llm_api_key,
                     token = request.token,
