@@ -280,12 +280,14 @@ export class UserService {
             .lean();
         const moviesFilters = [];
         for (const movie of movies) {
-            const { id, title, poster_path, backdrop_path, popularity, vote_average, vote_count, genres } = movie;
+            const { id, title, poster_path, backdrop_path, tmdb_id, popularity, vote_average, vote_count, genres } =
+                movie;
             const movieFilter = {
                 id,
                 title,
                 poster_path,
                 backdrop_path,
+                tmdb_id,
                 popularity,
                 vote_average,
                 vote_count,
@@ -377,6 +379,7 @@ export class UserService {
                 release_date,
                 poster_path,
                 backdrop_path,
+                tmdb_id,
                 popularity,
                 vote_average,
                 vote_count,
@@ -389,6 +392,7 @@ export class UserService {
                 release_date,
                 poster_path,
                 backdrop_path,
+                tmdb_id,
                 popularity,
                 vote_average,
                 vote_count,
@@ -456,6 +460,7 @@ export class UserService {
                 release_date,
                 poster_path,
                 backdrop_path,
+                tmdb_id,
                 popularity,
                 vote_average,
                 vote_count,
@@ -468,6 +473,7 @@ export class UserService {
                 release_date,
                 poster_path,
                 backdrop_path,
+                tmdb_id,
                 popularity,
                 vote_average,
                 vote_count,
