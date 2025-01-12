@@ -8,6 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { DayTrendingMovie } from './schemas/day-trending-movie.schema';
 import { Genre } from './schemas/genre.schema';
 import { WeekTrendingMovie } from './schemas/week-trending-movie.schema';
+import { AIServiceHelper } from 'src/helpers/RAG-LLM/ai.service.helper';
 
 @Injectable()
 export class MovieService {
@@ -147,6 +148,24 @@ export class MovieService {
             .lean();
         return recommendations;
     }
+
+    async fetchMovieRecommendationsByRAG(movieId: string): Promise<any[]> {
+        const foundMovie = await this.movieModel.findOne({ _id: new ObjectId(movieId) }).lean();
+        if (!foundMovie) {
+            throw new Error('Movie not found');
+        }
+
+        const similarMovieIds = await AIServiceHelper.getSimilarMovies(foundMovie.overview);
+        if (!similarMovieIds || similarMovieIds.length === 0) {
+            return [];
+        }
+
+        let similarMovies = await this.movieModel.find({ _id: { $in: similarMovieIds } }).lean();
+        similarMovies = similarMovies.filter(movie => movie._id.toString() !== movieId);
+
+        return similarMovies;
+    }
+
     async fetchLatestTrailer(): Promise<any[]> {
         const latestMovies = await this.movieModel
             .find({ 'trailers.key': { $ne: null } })

@@ -132,18 +132,23 @@ export class MovieController {
                 throw new BadRequestException('Movie id is required to fetch recommendations');
             }
 
-            const movieRecommendationsData = await this.movieService.fetchMovieRecommendationsByGenre(movieId);
-            if (movieRecommendationsData) {
-                return {
-                    statusCode: 200,
-                    message: 'Fetched movie recommendations successfully',
-                    data: {
-                        genreRecommendations: movieRecommendationsData ?? [],
-                        AIRecommendations: [],
-                    },
-                };
+            const genreRecommendationMovies = await this.movieService.fetchMovieRecommendationsByGenre(movieId);
+            if (!genreRecommendationMovies) {
+                throw new BadRequestException('Failed to get genre recommendation movies');
             }
-            throw new BadRequestException('Not found movie recommendations');
+            const similarRecommendationMovies = await this.movieService.fetchMovieRecommendationsByRAG(movieId);
+            if (!similarRecommendationMovies) {
+                throw new BadRequestException('Failed to get similar recommendation movies');
+            }
+
+            return {
+                statusCode: 200,
+                message: 'Fetched movie recommendations successfully',
+                data: {
+                    genreRecommendations: genreRecommendationMovies ?? [],
+                    similarRecommendations: similarRecommendationMovies ?? [],
+                },
+            };
         } catch (error) {
             throw new BadRequestException('Get movie recommendations error: ' + error.message);
         }
