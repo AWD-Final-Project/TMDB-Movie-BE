@@ -4,8 +4,8 @@ import { IsNotEmpty, IsOptional, Max, MaxLength, Min, MinLength } from 'class-va
 export class AiSearchQuery {
     @IsNotEmpty({ message: 'key_word is required' })
     @MinLength(3, { message: 'Search Error: key_word must be at least 3 characters long' })
-    @MaxLength(300, { message: 'Search Error: key_word length must not be greater than 300 characters' })
-    keyword: string;
+    @MaxLength(5000, { message: 'Search Error: key_word length must not be greater than 5000 characters' })
+    key_word: string;
 
     @IsOptional()
     @MaxLength(50, { message: 'Search Error: field length must not be greater than 50 characters' })
