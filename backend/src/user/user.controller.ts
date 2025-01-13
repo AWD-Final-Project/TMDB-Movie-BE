@@ -68,8 +68,8 @@ export class UserController {
                     email: user.email,
                     username: user.username,
                 },
-                accessToken: data.access_token,
-                refreshToken: data.refresh_token,
+                accessToken: data.accessToken,
+                refreshToken: data.refreshToken,
             },
         });
     }
@@ -97,10 +97,9 @@ export class UserController {
         };
     }
 
-    @UseGuards(JwtAuthGuard)
     @Post('invoke-new-tokens')
     async invokeNewTokens(@Req() req: Request, @Res() res: Response) {
-        const refreshToken = req.body?.refreshToken;
+        const { refreshToken } = req.body;
         if (!refreshToken) {
             throw new BadRequestException('Authorization credential is missing');
         }

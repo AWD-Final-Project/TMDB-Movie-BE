@@ -44,15 +44,12 @@ export class UserService {
         return UserFilter.makeBasicFilter(returnedUser);
     }
 
-    async login(
-        email: string,
-        password: string,
-    ): Promise<{
+    async updateLogin(id: string): Promise<{
         user: Partial<User>;
         accessToken: string;
         refreshToken: string;
     }> {
-        const foundUser = await this.userModel.findOne({ email: email, type: 'local' });
+        const foundUser = await this.userModel.findById(new Types.ObjectId(id));
         if (!foundUser) {
             throw new ConflictException('User not found!');
         }
@@ -61,14 +58,9 @@ export class UserService {
             throw new BadRequestException('Please activate your account first!');
         }
 
-        const isPasswordMatch = await BcryptHelper.compare(password, foundUser.password);
-        if (isPasswordMatch === false) {
-            throw new BadRequestException('Credentials are incorrect!');
-        }
-
         const accessToken = JWTHelper.generateAccessToken(foundUser);
         const refreshToken = JWTHelper.generateRefreshToken(foundUser);
-        await this.userModel.updateOne({ email }, { refreshToken });
+        await this.userModel.updateOne({ _id: foundUser._id }, { $set: { refreshToken: refreshToken } });
 
         await this.sessionService.addNewLoginHistory(foundUser._id.toString(), refreshToken);
         return {
@@ -79,7 +71,7 @@ export class UserService {
     }
 
     async logout(userId: string): Promise<void> {
-        await this.userModel.updateOne({ _id: new Types.ObjectId(userId) }, { refreshToken: '' });
+        await this.userModel.updateOne({ _id: new Types.ObjectId(userId) }, { $set: { refreshToken: '' } });
         const foundSession = await this.sessionService.findSessionByUserId(userId);
         if (!foundSession) {
             throw new BadRequestException('Session not found');
@@ -109,7 +101,7 @@ export class UserService {
         const newAccessToken = JWTHelper.generateAccessToken(foundUser);
         const newRefreshToken = JWTHelper.generateRefreshToken(foundUser);
 
-        await this.userModel.updateOne({ _id: foundUser._id }, { refreshToken: newRefreshToken });
+        await this.userModel.updateOne({ _id: foundUser._id }, { $set: { refreshToken: newRefreshToken } });
         await this.sessionService.updateSession(foundUser._id.toString(), newRefreshToken);
 
         return {
@@ -157,7 +149,7 @@ export class UserService {
         accessToken = JWTHelper.generateAccessToken(newUser);
         refreshToken = JWTHelper.generateRefreshToken(newUser);
 
-        await this.userModel.updateOne({ email }, { refreshToken });
+        await this.userModel.updateOne({ email }, { $set: { refreshToken } });
         await this.sessionService.addNewLoginHistory(newUser._id.toString(), refreshToken);
 
         return {
@@ -179,7 +171,6 @@ export class UserService {
         const { email, googleId, name } = googleUserInfo;
 
         const foundUser = await this.userModel.findOne({ email: email });
-        console.log(foundUser);
         let newUser = foundUser;
 
         if (!newUser) {
@@ -224,13 +215,12 @@ export class UserService {
 
                 await this.movieModel.updateOne(
                     { _id: new Types.ObjectId(movieId) },
-                    { vote_average: newVoteAverage, vote_count: newVoteCount },
+                    { $set: { vote_average: newVoteAverage, vote_count: newVoteCount } },
                 );
 
                 const foundUserRating = await this.userRatingListModel.findOne({
                     user_id: user.id,
                 });
-                console.log(foundUserRating);
                 if (!foundUserRating) {
                     const newUserRating = new this.userRatingListModel({
                         user_id: user.id,

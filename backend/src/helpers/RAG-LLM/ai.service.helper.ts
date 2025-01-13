@@ -103,8 +103,6 @@ export class AIServiceHelper {
                 throw new Error('No data found');
             }
 
-            console.log('Response data: ');
-            console.log(response.data);
             const routeHref = AIServiceHelper.getNavigationEndpoint(response.data?.route ?? '');
             if (!routeHref) {
                 throw new Error('No route found');
@@ -112,7 +110,6 @@ export class AIServiceHelper {
 
             let bestMatchMovieId = null;
             if (['CAST_PAGE', 'MOVIE_PAGE'].includes(response.data?.route)) {
-                console.log('Type 1');
                 bestMatchMovieId =
                     response.data?.params?.movie_ids?.length > 0 ? response.data?.params?.movie_ids[0] : null;
                 if (!bestMatchMovieId) {
@@ -125,14 +122,12 @@ export class AIServiceHelper {
                     id: bestMatchMovieId,
                 };
             } else if (['SEARCH_PAGE'].includes(response.data?.route)) {
-                console.log('Type 2');
                 return {
                     type: response.data?.route,
                     route: routeHref,
                     keyword: response.data?.params?.keyword,
                 };
             } else if (['GENRE_PAGE'].includes(response.data?.route)) {
-                console.log('Type 3');
                 return {
                     type: response.data?.route,
                     route: routeHref + response.data?.params?.genre,
@@ -140,7 +135,6 @@ export class AIServiceHelper {
                 };
             }
 
-            console.log('Type 4');
             return {
                 type: response.data?.route,
                 route: routeHref,

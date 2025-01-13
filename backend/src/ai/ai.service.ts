@@ -27,7 +27,6 @@ export class AiService {
     async navigate(query: string): Promise<any> {
         const response = await AIServiceHelper.navigate(query);
         const { type, route } = response;
-        console.log('Type: ', type);
         switch (type) {
             case 'CAST_PAGE': {
                 const movieId = response?.id;
@@ -55,10 +54,7 @@ export class AiService {
 
             case 'GENRE_PAGE': {
                 const bestMatchGenreId = response?.genre_ids?.length > 0 ? response?.genre_ids[0] : null;
-                console.log('bestMatchGenreId: ', bestMatchGenreId);
                 const foundMovie = await this.movieModel.findOne({ 'genres.id': bestMatchGenreId }).lean();
-                console.log('Found movie with genres: ');
-                console.log(foundMovie);
                 const keyword = foundMovie?.genres?.find((genre: any) => genre.id === bestMatchGenreId)?.name;
                 return {
                     route,
