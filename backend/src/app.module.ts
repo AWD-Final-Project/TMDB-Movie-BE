@@ -10,6 +10,7 @@ import { MovieModule } from './movie/movie.module';
 import { CastModule } from './cast/cast.module';
 import tmdbConfig from './configs/tmdb.config';
 import { AuthModule } from './auth/auth.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
     imports: [
@@ -20,6 +21,7 @@ import { AuthModule } from './auth/auth.module';
         MovieModule,
         AuthModule,
         CastModule,
+        AiModule,
     ],
     controllers: [AppController, UserController],
     providers: [AppService],

@@ -33,6 +33,26 @@ export class AIServiceHelper {
         }
     }
 
+    static async search(keyword: string, field: string = 'movies', limit: number = 10): Promise<any> {
+        try {
+            const url = `/retriever/`;
+            const response = await AIServiceHelper.get(url, {
+                params: {
+                    llm_api_key: LLM_API_KEY,
+                    collection_name: field,
+                    query: keyword,
+                    amount: limit,
+                },
+            });
+            if (!response || !response.data) {
+                throw new Error('No movies found');
+            }
+            return response.data?.result;
+        } catch (error) {
+            throw new Error(`Error during searching movies: ${error.message}`);
+        }
+    }
+
     static async getSimilarMovies(queryString: string, limit: number = 10): Promise<any> {
         try {
             const url = `/retriever/`;
@@ -51,6 +71,24 @@ export class AIServiceHelper {
             return response.data?.result;
         } catch (error) {
             throw new Error(`Error during getting similar movies: ${error.message}`);
+        }
+    }
+
+    static async navigate(query: string): Promise<any> {
+        try {
+            const url = `/navigate/`;
+            const response = await AIServiceHelper.post(url, {
+                params: {
+                    llm_api_key: LLM_API_KEY,
+                    query,
+                },
+            });
+            if (!response || !response.data) {
+                throw new Error('No data found');
+            }
+            return response.data;
+        } catch (error) {
+            throw new Error(`Error during navigating: ${error.message}`);
         }
     }
 }
