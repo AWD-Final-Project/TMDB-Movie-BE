@@ -1,0 +1,52 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+      AI_SERVICE_URL: http://ai:8000
+    command: ["npm", "run", "start:prod"]
+    depends_on:
+      - ai
+
+  ai:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+    container_name: ai
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ai:/app
+    environment:
+      PYTHONUNBUFFERED: 1
+    command: ["python", "run.py"]
+
+    # postgres:
+    #   image: pgvector/pgvector:pg16
+    #   container_name: postgres
+    #   healthcheck:
+    #     test: pg_is_ready -U $POSTGRES_USER
+    #     start_interval: 1s
+    #     start_period: 5s
+    #     interval: 5s
+    #     retries: 5
+    #   env_file:
+    #     - .env
+    #   ports:
+    #     - "$POSTGRES_PORT:5432"
+    #   volumes:
+    #     - ./data:/var/lib/postgresql/data
+
+# Optional: Define a network for inter-service communication
+networks:
+  default:
+    name: project_network
