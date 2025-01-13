@@ -173,33 +173,37 @@ export class UserService {
         refreshToken: string;
     }> {
         if (!googleUserInfo || !googleUserInfo.email || !googleUserInfo.googleId) {
-            return null;
+            throw new BadRequestException('Invalid Google user information.');
         }
 
-        const foundUser = await this.userModel.findOne({ email: googleUserInfo.email, type: 'google' });
-        let accessToken = '';
-        let refreshToken = '';
+        const { email, googleId, name } = googleUserInfo;
+
+        const foundUser = await this.userModel.findOne({ email: email });
+        console.log(foundUser);
         let newUser = foundUser;
 
         if (!newUser) {
-            const hashedPassword = await BcryptHelper.hash(googleUserInfo.googleId);
+            const hashedPassword = await BcryptHelper.hash(googleId);
             newUser = await this.userModel.create({
-                email: googleUserInfo.email,
-                username: googleUserInfo.name,
+                email: email,
+                username: name,
                 password: hashedPassword,
                 type: 'google',
             });
             await this.sessionService.createNewSession(newUser._id.toString());
         } else {
-            const isPasswordMatch = await BcryptHelper.compare(googleUserInfo.googleId, newUser.password);
+            if (newUser.type !== 'google') {
+                throw new BadRequestException('This account is not a Google user!');
+            }
+            const isPasswordMatch = await BcryptHelper.compare(googleId, newUser.password);
             if (isPasswordMatch === false) {
                 throw new BadRequestException('Credentials are incorrect!');
             }
         }
-        accessToken = JWTHelper.generateAccessToken(newUser);
-        refreshToken = JWTHelper.generateRefreshToken(newUser);
+        const accessToken = JWTHelper.generateAccessToken(newUser);
+        const refreshToken = JWTHelper.generateRefreshToken(newUser);
 
-        await this.userModel.updateOne({ email: newUser.email }, { refreshToken });
+        await this.userModel.updateOne({ _id: newUser._id }, { $set: { refreshToken } });
         await this.sessionService.addNewLoginHistory(newUser._id.toString(), refreshToken);
         return {
             user: UserFilter.makeBasicFilter(newUser),

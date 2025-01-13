@@ -158,16 +158,16 @@ export class UserController {
                 googleId: string;
                 name: string;
             };
+            const data = await this.userService.googleVerify(googleUserInfo);
+            return res.status(200).json({
+                statusCode: 200,
+                message: 'Google verify successfully',
+                data: data,
+            });
         } catch (error) {
+            console.error('Google verify error: ', error);
             throw new BadRequestException('Google verify error: ' + error.message);
         }
-
-        const data = await this.userService.googleVerify(googleUserInfo);
-        return res.status(200).json({
-            statusCode: 200,
-            message: 'Google verify successfully',
-            data: data,
-        });
     }
 
     @UseGuards(JwtAuthGuard)
